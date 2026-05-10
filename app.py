@@ -1,60 +1,55 @@
 from flask import Flask, render_template, request, jsonify
 import pickle
 import requests
-import pytesseract
-from PIL import Image
-import base64
-import io
 
 app = Flask(__name__)
 
+# API KEYS
 API_KEY = "2d032abfb1e249bca4299081e978a769"
+OCR_API_KEY = "K85609959888957"
 
-# Tesseract OCR Path
-import os
-
-if os.name == "nt":
-    pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
-
-# Load ML model
+# LOAD ML MODEL
 model = pickle.load(open("model.pkl", "rb"))
 vectorizer = pickle.load(open("vectorizer.pkl", "rb"))
 
 
-# Home Page
+# HOME PAGE
 @app.route("/")
 def home():
     return render_template("index.html")
 
 
-# AI Analysis API
+# AI ANALYSIS API
 @app.route("/analyze", methods=["POST"])
 def analyze():
 
-    data = request.get_json()
-
-    news = data.get("news", "")
-    image_data = data.get("image", "")
+    news = request.form.get("news", "")
+    image = request.files.get("image")
 
     extracted_text = ""
 
-    # OCR IMAGE EXTRACTION
-    if image_data:
+    # OCR IMAGE EXTRACTION USING OCR.SPACE API
+    if image:
 
         try:
 
-            image_data = image_data.split(",")[1]
+            response = requests.post(
+                "https://api.ocr.space/parse/image",
+                files={"filename": image},
+                data={
+                    "apikey": OCR_API_KEY,
+                    "language": "eng"
+                }
+            )
 
-            image_bytes = base64.b64decode(image_data)
+            result = response.json()
 
-            image = Image.open(io.BytesIO(image_bytes))
-
-            extracted_text = pytesseract.image_to_string(image)
+            extracted_text = result["ParsedResults"][0]["ParsedText"]
 
         except:
             extracted_text = ""
 
-    # COMBINE TEXT + OCR TEXT
+    # COMBINE NEWS + OCR TEXT
     full_text = (news + " " + extracted_text).strip()
 
     # VALIDATION
@@ -105,8 +100,12 @@ def analyze():
         "ocr_text": extracted_text
     })
 
+
+# RUN APP
+if __name__ == "__main__":
+
     import os
 
-if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
+
     app.run(host="0.0.0.0", port=port)

@@ -388,7 +388,7 @@ footer{padding:32px 24px;text-align:center;color:var(--muted);font-size:13px;bor
   </div>
 </section>
 
-<footer>© Veritas.AI — built for truth.</footer>
+<footer>© SIESCOMS.AI — built for truth.</footer>
 
 <script>
 /* Inject trusted sources (could be Jinja-rendered server-side) */
@@ -511,6 +511,7 @@ async function analyze(){
         : "fake",
 
       confidence: data.confidence,
+      ocr: data.ocr_text,
 
       reasons:
   data.prediction.includes("Real")
@@ -581,7 +582,7 @@ function renderResult(res){
 
   ring.setAttribute(
     'stroke-dashoffset',
-    c - (res.confidence/100)*c
+    c - (res.confidence / 100) * c
   );
 
   document.getElementById('ringPct').textContent =
@@ -592,15 +593,19 @@ function renderResult(res){
 
   signals.innerHTML = '';
 
-  // OCR TEXT BOX
-  if(res.ocr){
+  // OCR BOX
+  if(res.ocr && res.ocr.trim() !== ''){
 
     const ocrBox = document.createElement('div');
 
     ocrBox.className = 'signal';
 
-    ocrBox.innerHTML =
-      `<span class="signal-label">OCR Extracted Text</span>${res.ocr}`;
+    ocrBox.innerHTML = `
+      <span class="signal-label">
+        OCR Extracted Text
+      </span>
+      ${res.ocr}
+    `;
 
     signals.appendChild(ocrBox);
   }
@@ -612,8 +617,12 @@ function renderResult(res){
 
     d.className = 'signal';
 
-    d.innerHTML =
-      `<span class="signal-label">Signal ${i+1}</span>${r}`;
+    d.innerHTML = `
+      <span class="signal-label">
+        Signal ${i+1}
+      </span>
+      ${r}
+    `;
 
     signals.appendChild(d);
   });

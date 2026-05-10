@@ -500,7 +500,10 @@ async function analyze(){
 
     const formData = new FormData();
 
-formData.append("news", newsInput.value);
+formData.append(
+  "news",
+  document.getElementById("newsText").value
+);
 
 if (uploadedImageFile) {
   formData.append("image", uploadedImageFile);

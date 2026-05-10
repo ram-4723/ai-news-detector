@@ -1,0 +1,8 @@
+flask
+scikit-learn
+requests
+pytesseract
+pillow
+gunicorn
+pandas
+numpy

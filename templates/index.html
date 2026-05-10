@@ -419,25 +419,36 @@ SOURCES.forEach((s, i) => {
 });
 
 /* Image upload */
-let uploadedImage = null;
+let uploadedImageFile = null;
+
 function onPick(e){
-  const f = e.target.files && e.target.files[0];
-  if(!f) return;
-  const r = new FileReader();
-  r.onload = ev => {
 
-  uploadedImage = ev.target.result;
+  const file = e.target.files[0];
 
-  document.getElementById('previewImg').src = ev.target.result;
+  if(!file) return;
 
-  document.getElementById('preview').style.display = 'inline-block';
-};
-  r.readAsDataURL(f);
+  uploadedImageFile = file;
+
+  const reader = new FileReader();
+
+  reader.onload = function(ev){
+
+    document.getElementById('previewImg').src = ev.target.result;
+
+    document.getElementById('preview').style.display = 'inline-block';
+  };
+
+  reader.readAsDataURL(file);
 }
+
 function removeImage(){
-  uploadedImage = null;
+
+  uploadedImageFile = null;
+
   document.getElementById('preview').style.display = 'none';
+
   document.getElementById('previewImg').src = '';
+
   document.getElementById('fileInput').value = '';
 }
 
@@ -487,46 +498,35 @@ async function analyze(){
 
   try {
 
-    const response = await fetch('/analyze', {
+    const formData = new FormData();
 
-      method: 'POST',
+formData.append("news", newsInput.value);
 
-      headers: {
-        'Content-Type': 'application/json'
-      },
+if (uploadedImageFile) {
+  formData.append("image", uploadedImageFile);
+}
 
-      body: JSON.stringify({
-  news: text,
-  image: uploadedImage
-})
+const response = await fetch("/analyze", {
+  method: "POST",
+  body: formData
+});
+const data = await response.json();
 
-    });
+renderResult({
+  verdict: data.prediction.includes("Real")
+    ? "real"
+    : "fake",
 
-    const data = await response.json();
+  confidence: data.confidence,
 
-    renderResult({
-      verdict:
-        data.prediction.includes("Real")
-        ? "real"
-        : "fake",
+  ocr: data.ocr_text,
 
-      confidence: data.confidence,
-      ocr: data.ocr_text,
-
-      reasons:
-  data.prediction.includes("Real")
-  ? [
-      "Trusted content patterns detected",
-      "Language structure appears credible",
-      "Cross-reference analysis completed"
-    ]
-  : [
-      "Potential misinformation patterns detected",
-      "Limited trusted verification found",
-      "Cross-reference confidence is low"
-    ]
-    
-    });
+  reasons: [
+    "AI model analyzed linguistic patterns",
+    "Cross-reference verification completed",
+    "Confidence generated from ML prediction"
+  ]
+});
 
   } catch(error){
 

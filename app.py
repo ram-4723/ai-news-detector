@@ -1,134 +1,110 @@
 from flask import Flask, render_template, request, jsonify
 import pickle
 import requests
-import os
+import pytesseract
+from PIL import Image
+import base64
+import io
 
 app = Flask(__name__)
 
-# API KEYS
 API_KEY = "2d032abfb1e249bca4299081e978a769"
-OCR_API_KEY = "K85609959888957"
 
-# LOAD ML MODEL
+# Tesseract OCR Path
+import os
+
+if os.name == "nt":
+    pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+
+# Load ML model
 model = pickle.load(open("model.pkl", "rb"))
 vectorizer = pickle.load(open("vectorizer.pkl", "rb"))
 
 
-# HOME PAGE
+# Home Page
 @app.route("/")
 def home():
     return render_template("index.html")
 
 
-# AI ANALYSIS API
+# AI Analysis API
 @app.route("/analyze", methods=["POST"])
 def analyze():
 
-    try:
+    data = request.get_json()
 
-        # GET TEXT + IMAGE
-        news = request.form.get("news", "")
-        image = request.files.get("image")
+    news = data.get("news", "")
+    image_data = data.get("image", "")
 
-        extracted_text = ""
+    extracted_text = ""
 
-        # OCR IMAGE EXTRACTION USING OCR.SPACE API
-        if image:
-
-            try:
-
-                response = requests.post(
-                    "https://api.ocr.space/parse/image",
-                    files={"filename": image},
-                    data={
-                        "apikey": OCR_API_KEY,
-                        "language": "eng"
-                    }
-                )
-
-                result = response.json()
-
-                if (
-                    "ParsedResults" in result
-                    and len(result["ParsedResults"]) > 0
-                ):
-                    extracted_text = result["ParsedResults"][0].get("ParsedText", "")
-
-            except Exception as ocr_error:
-                print("OCR ERROR:", ocr_error)
-                extracted_text = ""
-
-        # COMBINE NEWS + OCR TEXT
-        full_text = (news + " " + extracted_text).strip()
-
-        # VALIDATION
-        if len(full_text.split()) < 3:
-
-            return jsonify({
-                "prediction": "Please enter proper news content.",
-                "confidence": 0,
-                "articles": [],
-                "ocr_text": extracted_text
-            })
-
-        # NLP PROCESSING
-        transformed_news = vectorizer.transform([full_text])
-
-        # ML PREDICTION
-        prediction = model.predict(transformed_news)[0]
-
-        # CONFIDENCE
-        probabilities = model.predict_proba(transformed_news)
-
-        confidence = round(max(probabilities[0]) * 100, 2)
-
-        # FINAL RESULT
-        result = "Likely Real" if prediction == 1 else "Likely Fake"
-
-        # NEWS API SEARCH
-        articles = []
+    # OCR IMAGE EXTRACTION
+    if image_data:
 
         try:
 
-            url = f"https://newsapi.org/v2/everything?q={full_text}&apiKey={API_KEY}"
+            image_data = image_data.split(",")[1]
 
-            response = requests.get(url)
+            image_bytes = base64.b64decode(image_data)
 
-            news_data = response.json()
+            image = Image.open(io.BytesIO(image_bytes))
 
-            for article in news_data.get("articles", [])[:5]:
+            extracted_text = pytesseract.image_to_string(image)
 
-                articles.append({
-                    "title": article.get("title", ""),
-                    "url": article.get("url", "")
-                })
+        except:
+            extracted_text = ""
 
-        except Exception as news_error:
-            print("NEWS API ERROR:", news_error)
+    # COMBINE TEXT + OCR TEXT
+    full_text = (news + " " + extracted_text).strip()
 
-        # FINAL RESPONSE
+    # VALIDATION
+    if len(full_text.split()) < 5:
+
         return jsonify({
-            "prediction": result,
-            "confidence": confidence,
-            "articles": articles,
+            "prediction": "Please enter proper news content.",
+            "confidence": 0,
+            "articles": [],
             "ocr_text": extracted_text
         })
 
-    except Exception as e:
+    # NLP PROCESSING
+    transformed_news = vectorizer.transform([full_text])
 
-        print("SERVER ERROR:", e)
+    # ML PREDICTION
+    prediction = model.predict(transformed_news)[0]
 
-        return jsonify({
-            "prediction": "Server Error",
-            "confidence": 0,
-            "articles": [],
-            "ocr_text": ""
-        }), 500
+    # CONFIDENCE
+    probabilities = model.predict_proba(transformed_news)
 
+    confidence = round(max(probabilities[0]) * 100, 2)
 
-# RUN APP
+    # FINAL RESULT
+    result = "Likely Real" if prediction == 1 else "Likely Fake"
+
+    # NEWS API SEARCH
+    url = f"https://newsapi.org/v2/everything?q={full_text}&apiKey={API_KEY}"
+
+    response = requests.get(url)
+
+    news_data = response.json()
+
+    articles = []
+
+    for article in news_data.get("articles", [])[:5]:
+
+        articles.append({
+            "title": article.get("title", ""),
+            "url": article.get("url", "")
+        })
+
+    # FINAL RESPONSE
+    return jsonify({
+        "prediction": result,
+        "confidence": confidence,
+        "articles": articles,
+        "ocr_text": extracted_text
+    })
++6
+
 if __name__ == "__main__":
-
-    port = int(os.environ.get("PORT", 5000))
-
-    app.run(host="0.0.0.0", port=port)
+    app.run(debug=True)

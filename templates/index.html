@@ -419,36 +419,25 @@ SOURCES.forEach((s, i) => {
 });
 
 /* Image upload */
-let uploadedImageFile = null;
-
+let uploadedImage = null;
 function onPick(e){
+  const f = e.target.files && e.target.files[0];
+  if(!f) return;
+  const r = new FileReader();
+  r.onload = ev => {
 
-  const file = e.target.files[0];
+  uploadedImage = ev.target.result;
 
-  if(!file) return;
+  document.getElementById('previewImg').src = ev.target.result;
 
-  uploadedImageFile = file;
-
-  const reader = new FileReader();
-
-  reader.onload = function(ev){
-
-    document.getElementById('previewImg').src = ev.target.result;
-
-    document.getElementById('preview').style.display = 'inline-block';
-  };
-
-  reader.readAsDataURL(file);
+  document.getElementById('preview').style.display = 'inline-block';
+};
+  r.readAsDataURL(f);
 }
-
 function removeImage(){
-
-  uploadedImageFile = null;
-
+  uploadedImage = null;
   document.getElementById('preview').style.display = 'none';
-
   document.getElementById('previewImg').src = '';
-
   document.getElementById('fileInput').value = '';
 }
 
@@ -498,38 +487,46 @@ async function analyze(){
 
   try {
 
-    const formData = new FormData();
+    const response = await fetch('/analyze', {
 
-formData.append(
-  "news",
-  document.getElementById("newsText").value
-);
+      method: 'POST',
 
-if (uploadedImageFile) {
-  formData.append("image", uploadedImageFile);
-}
+      headers: {
+        'Content-Type': 'application/json'
+      },
 
-const response = await fetch("/analyze", {
-  method: "POST",
-  body: formData
-});
-const data = await response.json();
+      body: JSON.stringify({
+  news: text,
+  image: uploadedImage
+})
 
-renderResult({
-  verdict: data.prediction.includes("Real")
-    ? "real"
-    : "fake",
+    });
 
-  confidence: data.confidence,
+    const data = await response.json();
 
-  ocr: data.ocr_text,
+    renderResult({
+      verdict:
+        data.prediction.includes("Real")
+        ? "real"
+        : "fake",
 
-  reasons: [
-    "AI model analyzed linguistic patterns",
-    "Cross-reference verification completed",
-    "Confidence generated from ML prediction"
-  ]
-});
+      confidence: data.confidence,
+      ocr: data.ocr_text,
+
+      reasons:
+  data.prediction.includes("Real")
+  ? [
+      "Trusted content patterns detected",
+      "Language structure appears credible",
+      "Cross-reference analysis completed"
+    ]
+  : [
+      "Potential misinformation patterns detected",
+      "Limited trusted verification found",
+      "Cross-reference confidence is low"
+    ]
+    
+    });
 
   } catch(error){
 

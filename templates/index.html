@@ -1,563 +1,380 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>SIESCOMS.AI — AI Fake News Detector</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-<style>
-:root{
-  --bg: #14102a;
-  --fg: #f4f3fb;
-  --muted: #9c98b8;
-  --violet: #a06bff;
-  --primary: #8a5cff;
-  --cyan: #6ee7ff;
-  --success: #4cd7a0;
-  --destructive: #ff5b6e;
-  --border: rgba(255,255,255,.10);
-  --gradient-primary: linear-gradient(135deg, #a06bff 0%, #6f7bff 50%, #6ee7ff 100%);
-  --shadow-glow: 0 0 60px -10px rgba(160,107,255,.55);
-  --shadow-glow-cyan: 0 0 60px -10px rgba(110,231,255,.5);
-  --shadow-card: 0 20px 60px -20px rgba(0,0,0,.6);
-  --font-display: "Space Grotesk", system-ui, sans-serif;
-  --font-sans: "Inter", system-ui, sans-serif;
-}
-*{box-sizing:border-box;margin:0;padding:0;border-color:var(--border);}
-html,body{background:var(--bg);color:var(--fg);font-family:var(--font-sans);-webkit-font-smoothing:antialiased;}
-body{
-  min-height:100vh;
-  background-image:
-    radial-gradient(at 20% 20%, rgba(150,80,255,.35) 0, transparent 50%),
-    radial-gradient(at 80% 10%, rgba(80,140,230,.30) 0, transparent 50%),
-    radial-gradient(at 70% 80%, rgba(90,200,230,.25) 0, transparent 50%);
-  background-attachment:fixed;
-}
-h1,h2,h3,h4{font-family:var(--font-display);letter-spacing:-.02em;}
-a{color:inherit;text-decoration:none;}
-button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;}
-
-/* Utilities */
-.glass{background:rgba(255,255,255,.04);backdrop-filter:blur(20px) saturate(140%);-webkit-backdrop-filter:blur(20px) saturate(140%);border:1px solid rgba(255,255,255,.08);}
-.glass-strong{background:rgba(40,30,75,.55);backdrop-filter:blur(24px) saturate(160%);-webkit-backdrop-filter:blur(24px) saturate(160%);border:1px solid rgba(255,255,255,.10);}
-.text-gradient{background:var(--gradient-primary);background-size:200% 200%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:gradient-x 8s ease infinite;}
-.bg-gradient-primary{background-image:var(--gradient-primary);}
-.shadow-glow{box-shadow:var(--shadow-glow);}
-.shadow-glow-cyan{box-shadow:var(--shadow-glow-cyan);}
-.shadow-card{box-shadow:var(--shadow-card);}
-.muted{color:var(--muted);}
-
-/* Animations */
-@keyframes fade-in{from{opacity:0}to{opacity:1}}
-@keyframes fade-up{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
-@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
-@keyframes pulse-glow{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.06)}}
-@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
-@keyframes scan{0%{transform:translateY(-100%);opacity:0}50%{opacity:1}100%{transform:translateY(100%);opacity:0}}
-@keyframes orbit{from{transform:rotate(0deg) translateX(40px) rotate(0deg)}to{transform:rotate(360deg) translateX(40px) rotate(-360deg)}}
-@keyframes gradient-x{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
-@keyframes spin{to{transform:rotate(360deg)}}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
-
-.animate-fade-in{animation:fade-in .6s ease-out;}
-.animate-fade-up{animation:fade-up .7s ease-out both;}
-.animate-float{animation:float 6s ease-in-out infinite;}
-.animate-pulse-glow{animation:pulse-glow 2.5s ease-in-out infinite;}
-.animate-pulse{animation:pulse 2s ease-in-out infinite;}
-.animate-spin{animation:spin 1s linear infinite;}
-
-/* Navbar */
-.navbar{position:sticky;top:0;z-index:40;width:100%;}
-.nav-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:16px 24px;}
-.brand{display:flex;align-items:center;gap:10px;}
-.brand-logo{display:grid;place-items:center;height:36px;width:36px;border-radius:12px;background-image:var(--gradient-primary);box-shadow:var(--shadow-glow);}
-.brand-logo svg{width:16px;height:16px;color:#fff;}
-.brand-text{font-family:var(--font-display);font-size:18px;font-weight:600;letter-spacing:-.02em;}
-.nav-links{display:none;gap:32px;font-size:14px;color:var(--muted);}
-.nav-links a{transition:color .2s;}
-.nav-links a:hover{color:var(--fg);}
-.nav-signin{padding:8px 20px;border-radius:9999px;font-size:14px;font-weight:500;transition:all .2s;}
-.nav-signin:hover{background:rgba(255,255,255,.10);box-shadow:var(--shadow-glow);}
-@media(min-width:768px){.nav-links{display:flex;}}
-
-/* Hero */
-.hero{position:relative;max-width:1200px;margin:0 auto;padding:48px 24px 64px;text-align:center;}
-@media(min-width:640px){.hero{padding-top:80px;}}
-.orb-blur1{position:absolute;left:50%;top:0;transform:translateX(-50%);height:520px;width:520px;border-radius:50%;background:rgba(150,80,255,.20);filter:blur(80px);z-index:-1;pointer-events:none;}
-.orb-blur2{position:absolute;right:40px;top:128px;height:256px;width:256px;border-radius:50%;background:rgba(110,231,255,.20);filter:blur(80px);z-index:-1;pointer-events:none;}
-
-.aiorb{position:relative;height:80px;width:80px;margin:0 auto 32px;}
-.aiorb-blur{position:absolute;inset:0;border-radius:50%;background-image:var(--gradient-primary);filter:blur(24px);opacity:.7;animation:pulse-glow 2.5s ease-in-out infinite;}
-.aiorb-core{position:relative;height:100%;width:100%;border-radius:50%;background-image:var(--gradient-primary);box-shadow:var(--shadow-glow);animation:float 6s ease-in-out infinite;}
-.aiorb-dot{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;}
-.aiorb-dot span{height:8px;width:8px;border-radius:50%;background:var(--cyan);animation:orbit 12s linear infinite;}
-
-.badge{display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border-radius:9999px;font-size:12px;font-weight:500;color:var(--muted);}
-.badge svg{width:14px;height:14px;color:var(--cyan);}
-
-.hero h1{margin-top:24px;font-size:48px;font-weight:700;line-height:1.05;}
-@media(min-width:640px){.hero h1{font-size:60px;}}
-@media(min-width:768px){.hero h1{font-size:72px;}}
-.hero p{margin:24px auto 0;max-width:560px;font-size:16px;line-height:1.6;color:var(--muted);}
-@media(min-width:640px){.hero p{font-size:18px;}}
-
-/* Detector */
-.detector{max-width:900px;margin:0 auto;padding:0 24px;position:relative;}
-.detector-card{position:relative;overflow:hidden;border-radius:24px;padding:24px;box-shadow:var(--shadow-card);}
-@media(min-width:640px){.detector-card{padding:32px;}}
-.live-tag{display:flex;align-items:center;gap:8px;font-size:12px;text-transform:uppercase;letter-spacing:.2em;color:var(--muted);}
-.live-dot{height:6px;width:6px;border-radius:50%;background:var(--success);animation:pulse 2s infinite;}
-
-textarea{margin-top:16px;width:100%;resize:none;border-radius:16px;border:1px solid rgba(255,255,255,.10);background:rgba(0,0,0,.30);padding:20px;font-family:var(--font-sans);font-size:16px;color:var(--fg);transition:all .2s;outline:none;}
-textarea::placeholder{color:var(--muted);}
-textarea:focus{border-color:rgba(160,107,255,.6);box-shadow:0 0 0 2px rgba(160,107,255,.30);}
-
-.preview{margin-top:16px;position:relative;display:none;}
-.preview img{height:128px;border-radius:12px;object-fit:cover;box-shadow:0 0 0 1px rgba(255,255,255,.15);}
-.preview-remove{position:absolute;right:-8px;top:-8px;display:grid;place-items:center;height:24px;width:24px;border-radius:50%;background:var(--destructive);color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.4);transition:transform .2s;}
-.preview-remove:hover{transform:scale(1.1);}
-.preview-remove svg{width:14px;height:14px;}
-
-.actions{margin-top:20px;display:flex;flex-direction:column-reverse;gap:12px;}
-@media(min-width:640px){.actions{flex-direction:row;align-items:center;justify-content:space-between;}}
-.error-message{display:none;margin-top:14px;color:var(--destructive);font-size:14px;}
-.upload-group{display:flex;align-items:center;gap:8px;}
-.upload-btn{display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:12px;font-size:14px;font-weight:500;transition:all .2s;}
-.upload-btn:hover{background:rgba(255,255,255,.10);box-shadow:var(--shadow-glow-cyan);}
-.upload-btn svg{width:16px;height:16px;}
-.upload-hint{display:none;font-size:12px;color:var(--muted);}
-@media(min-width:640px){.upload-hint{display:inline;}}
-
-.analyze-btn{position:relative;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 24px;border-radius:12px;background-image:var(--gradient-primary);font-size:14px;font-weight:600;color:#fff;box-shadow:var(--shadow-glow);transition:transform .2s;}
-.analyze-btn:hover:not(:disabled){transform:scale(1.02);}
-.analyze-btn:active{transform:scale(.99);}
-.analyze-btn:disabled{opacity:.5;cursor:not-allowed;}
-.analyze-btn svg{width:16px;height:16px;}
-.shimmer{position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(to right,transparent,rgba(255,255,255,.30),transparent);transition:transform .7s;}
-.analyze-btn:hover .shimmer{transform:translateX(100%);}
-
-.scan-line{pointer-events:none;position:absolute;left:0;right:0;top:0;height:128px;background:linear-gradient(to bottom,rgba(160,107,255,.3),rgba(110,231,255,.2),transparent);animation:scan 2s ease-in-out infinite;display:none;}
-
-/* Loading panel */
-.loading-panel{display:none;margin-top:24px;border-radius:24px;padding:32px;animation:fade-in .6s ease-out;}
-.loading-row{display:flex;align-items:center;gap:16px;}
-.loading-orb{position:relative;height:56px;width:56px;flex-shrink:0;}
-.loading-orb-blur{position:absolute;inset:0;border-radius:50%;background-image:var(--gradient-primary);filter:blur(16px);opacity:.7;animation:pulse-glow 2.5s ease-in-out infinite;}
-.loading-orb-core{position:relative;display:grid;place-items:center;height:100%;width:100%;border-radius:50%;background-image:var(--gradient-primary);}
-.loading-orb-core svg{width:24px;height:24px;color:#fff;animation:pulse 2s infinite;}
-.loading-info{flex:1;}
-.loading-info > p{font-family:var(--font-display);font-size:18px;}
-.bar{margin-top:8px;height:6px;overflow:hidden;border-radius:9999px;background:rgba(255,255,255,.10);}
-.bar > div{height:100%;width:33%;border-radius:9999px;background:linear-gradient(to right,var(--violet),var(--primary),var(--cyan));background-size:200% 100%;animation:shimmer 2.5s linear infinite;}
-.steps{margin-top:8px;display:flex;flex-wrap:wrap;gap:8px;font-size:12px;color:var(--muted);}
-.steps span{border:1px solid rgba(255,255,255,.10);padding:4px 10px;border-radius:9999px;}
-
-/* Result */
-.result{display:none;margin-top:24px;animation:fade-up .7s ease-out both;}
-.result-card{border-radius:24px;padding:24px;box-shadow:var(--shadow-card);border:1px solid rgba(255,255,255,.10);}
-@media(min-width:640px){.result-card{padding:32px;}}
-.result-card.real{border-color:rgba(76,215,160,.4);}
-.result-card.fake{border-color:rgba(255,91,110,.4);}
-.result-top{display:flex;flex-direction:column;gap:24px;}
-@media(min-width:640px){.result-top{flex-direction:row;align-items:center;justify-content:space-between;}}
-.verdict-row{display:flex;align-items:center;gap:16px;}
-.verdict-icon{display:grid;place-items:center;height:56px;width:56px;border-radius:16px;}
-.verdict-icon.real{background:rgba(76,215,160,.15);color:var(--success);}
-.verdict-icon.fake{background:rgba(255,91,110,.15);color:var(--destructive);}
-.verdict-icon svg{width:28px;height:28px;}
-.verdict-label{font-size:12px;text-transform:uppercase;letter-spacing:.2em;color:var(--muted);}
-.verdict-text{font-family:var(--font-display);font-size:30px;font-weight:700;}
-
-.confidence{display:flex;align-items:center;gap:16px;}
-.ring{position:relative;height:80px;width:80px;}
-.ring svg{height:100%;width:100%;transform:rotate(-90deg);}
-.ring-pct{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--font-display);font-size:18px;font-weight:700;}
-.confidence p:first-child{font-weight:600;font-size:14px;}
-.confidence p:last-child{color:var(--muted);font-size:14px;}
-
-.signals{margin-top:24px;display:grid;gap:12px;border-top:1px solid rgba(255,255,255,.10);padding-top:24px;}
-@media(min-width:640px){.signals{grid-template-columns:repeat(3,1fr);}}
-.signal{border-radius:12px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.05);padding:16px;font-size:14px;color:var(--muted);}
-.signal-label{display:block;margin-bottom:4px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:rgba(255,255,255,.8);}
-
-/* Trusted Sources */
-.sources-section{max-width:1200px;margin:0 auto;padding:96px 24px;}
-.sources-head{display:flex;flex-direction:column;align-items:flex-start;gap:16px;margin-bottom:40px;}
-@media(min-width:640px){.sources-head{flex-direction:row;align-items:flex-end;justify-content:space-between;}}
-.eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.25em;color:var(--muted);}
-.sources-head h2{margin-top:8px;font-size:30px;font-weight:700;}
-@media(min-width:640px){.sources-head h2{font-size:36px;}}
-.sources-head p{max-width:380px;font-size:14px;color:var(--muted);}
-
-.sources-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;}
-@media(min-width:640px){.sources-grid{grid-template-columns:repeat(3,1fr);}}
-@media(min-width:1024px){.sources-grid{grid-template-columns:repeat(4,1fr);}}
-.source{position:relative;overflow:hidden;border-radius:16px;padding:20px;transition:all .3s;animation:fade-up .7s ease-out both;}
-.source:hover{transform:translateY(-4px);background:rgba(255,255,255,.07);box-shadow:var(--shadow-glow);}
-.source-glow{position:absolute;right:-24px;top:-24px;height:96px;width:96px;border-radius:50%;background-image:var(--gradient-primary);opacity:0;filter:blur(32px);transition:opacity .5s;}
-.source:hover .source-glow{opacity:.4;}
-.source-top{position:relative;display:flex;justify-content:space-between;align-items:flex-start;}
-.source-icon{display:grid;place-items:center;height:40px;width:40px;border-radius:12px;background:rgba(255,255,255,.05);box-shadow:0 0 0 1px rgba(255,255,255,.10);}
-.source-icon svg{width:20px;height:20px;color:var(--cyan);}
-.source-score{font-family:ui-monospace,monospace;font-size:12px;color:var(--cyan);}
-.source-name{position:relative;margin-top:16px;font-family:var(--font-display);font-size:18px;font-weight:600;}
-.source-tag{position:relative;font-size:12px;color:var(--muted);}
-
-/* How it works */
-.how-section{max-width:1200px;margin:0 auto;padding:0 24px 96px;}
-.how-head{margin-bottom:40px;text-align:center;}
-.how-head h2{margin-top:8px;font-size:30px;font-weight:700;}
-@media(min-width:640px){.how-head h2{font-size:36px;}}
-.how-grid{display:grid;gap:20px;}
-@media(min-width:768px){.how-grid{grid-template-columns:repeat(3,1fr);}}
-.step{position:relative;overflow:hidden;border-radius:24px;padding:28px;transition:all .5s;animation:fade-up .7s ease-out both;}
-.step:hover{transform:translateY(-4px);box-shadow:var(--shadow-glow);}
-.step-num{position:absolute;right:24px;top:24px;font-family:ui-monospace,monospace;font-size:12px;color:var(--muted);}
-.step-icon{display:grid;place-items:center;height:48px;width:48px;border-radius:16px;background-image:var(--gradient-primary);box-shadow:var(--shadow-glow);}
-.step-icon svg{width:24px;height:24px;color:#fff;}
-.step h3{margin-top:20px;font-family:var(--font-display);font-size:20px;font-weight:600;}
-.step p{margin-top:8px;font-size:14px;color:var(--muted);}
-
-footer{padding:32px 24px;text-align:center;color:var(--muted);font-size:13px;border-top:1px solid var(--border);}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#f6f7f3" />
+  <meta name="description" content="Search current news coverage for a claim and review the original article sources." />
+  <title>Rekkod AI — News Evidence Checker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172a28;
+      --muted: #63716d;
+      --paper: #f6f7f3;
+      --surface: #fff;
+      --line: #e2e8e2;
+      --green: #176c58;
+      --green-dark: #105341;
+      --mint: #e6f4ec;
+      --lime: #d9f26a;
+      --coral: #bd4b39;
+      --shadow: 0 18px 60px rgba(27, 52, 43, .08);
+      font-family: "DM Sans", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; min-width: 320px; color: var(--ink); background: var(--paper); }
+    button, textarea { font: inherit; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+    a { color: inherit; }
+    .shell { width: min(100% - 40px, 1000px); margin-inline: auto; }
+    .topbar { height: 76px; display: flex; align-items: center; border-bottom: 1px solid var(--line); }
+    .topbar-inner { display: flex; align-items: center; justify-content: space-between; }
+    .brand { display: inline-flex; align-items: center; gap: 11px; color: var(--ink); text-decoration: none; }
+    .brand-mark { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 12px; color: var(--lime); background: var(--green); }
+    .brand-mark svg { width: 21px; height: 21px; }
+    .brand-name { font: 800 20px/1 "Manrope", sans-serif; letter-spacing: -.8px; }
+    .brand-name span { color: var(--green); }
+    .top-note { color: var(--muted); font-size: 13px; }
+    main { padding: 76px 0 90px; }
+    .intro { max-width: 720px; margin: 0 auto 35px; text-align: center; }
+    .eyebrow { display: inline-flex; align-items: center; gap: 8px; color: var(--green); font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+    .eyebrow-dot { width: 7px; height: 7px; border-radius: 50%; background: #78a923; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { margin: 17px 0 14px; font: 800 clamp(36px, 6vw, 58px)/1.08 "Manrope", sans-serif; letter-spacing: -2.6px; }
+    .intro-copy { max-width: 600px; margin: 0 auto; color: var(--muted); font-size: 17px; line-height: 1.65; }
+    .checker { max-width: 780px; margin: 0 auto; padding: 27px; border: 1px solid var(--line); border-radius: 22px; background: var(--surface); box-shadow: var(--shadow); }
+    .field-label { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; font-size: 14px; font-weight: 700; }
+    .field-label small { color: var(--muted); font-size: 12px; font-weight: 500; }
+    textarea { display: block; width: 100%; min-height: 185px; resize: vertical; padding: 17px; border: 1px solid var(--line); border-radius: 14px; outline: 0; color: var(--ink); background: #fbfcfa; font-size: 15px; line-height: 1.6; transition: border-color .2s, box-shadow .2s; }
+    textarea::placeholder { color: #89948e; }
+    textarea:focus { border-color: #64a58a; box-shadow: 0 0 0 4px rgba(23,108,88,.1); }
+    .under-field { display: flex; justify-content: space-between; gap: 12px; margin-top: 8px; color: var(--muted); font-size: 12px; }
+    .upload-row { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-top: 19px; padding: 15px; border: 1px dashed #c8d5ca; border-radius: 13px; background: #fbfcfa; }
+    .upload-copy { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .upload-icon { display: grid; place-items: center; flex: 0 0 38px; width: 38px; height: 38px; border-radius: 11px; color: var(--green); background: var(--mint); }
+    .upload-icon svg { width: 19px; height: 19px; }
+    .upload-title { margin: 0 0 3px; font-size: 13px; font-weight: 700; }
+    .upload-subtitle { margin: 0; color: var(--muted); font-size: 12px; }
+    .file-button, .remove-button { border: 0; background: transparent; color: var(--green); font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+    .file-button:hover, .remove-button:hover { color: var(--green-dark); text-decoration: underline; }
+    #fileInput { display: none; }
+    .preview { display: none; align-items: center; gap: 12px; margin-top: 12px; padding: 10px; border: 1px solid var(--line); border-radius: 12px; }
+    .preview img { display: block; width: 52px; height: 52px; border-radius: 8px; object-fit: cover; }
+    .preview-name { flex: 1; min-width: 0; overflow: hidden; color: var(--muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+    .form-actions { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 20px; }
+    .privacy-note { max-width: 390px; margin: 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .submit-button { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 48px; padding: 0 20px; border: 0; border-radius: 12px; color: #fff; background: var(--green); font-size: 14px; font-weight: 700; cursor: pointer; transition: background .2s, transform .2s; }
+    .submit-button:hover:not(:disabled) { background: var(--green-dark); transform: translateY(-1px); }
+    .submit-button:disabled { opacity: .65; cursor: wait; }
+    .submit-button svg { width: 17px; height: 17px; }
+    .spinner { display: none; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%; animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .error { display: none; margin: 15px 0 0; padding: 12px 14px; border: 1px solid #f2c4bd; border-radius: 10px; color: #8f3023; background: #fff2ef; font-size: 13px; line-height: 1.5; }
+    .results { display: none; max-width: 780px; margin: 28px auto 0; scroll-margin-top: 22px; }
+    .result-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; padding: 22px 24px; border: 1px solid #d9e6dc; border-radius: 18px 18px 0 0; background: #eef6ef; }
+    .result-kicker { margin-bottom: 6px; color: var(--green); font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+    .result-head h2 { margin: 0; font: 800 24px/1.2 "Manrope", sans-serif; letter-spacing: -.7px; }
+    .result-count { flex: 0 0 auto; padding: 8px 11px; border: 1px solid #d2e2d6; border-radius: 999px; color: var(--green-dark); background: #fff; font-size: 12px; font-weight: 700; }
+    .result-body { padding: 21px 24px; border: 1px solid var(--line); border-top: 0; border-radius: 0 0 18px 18px; background: #fff; box-shadow: var(--shadow); }
+    .result-summary { margin: 0; color: #40534d; font-size: 14px; line-height: 1.65; }
+    .secondary-estimate { display: none; margin-top: 15px; padding: 11px 13px; border-radius: 10px; color: #53635d; background: #f4f6f3; font-size: 12px; line-height: 1.5; }
+    .secondary-estimate strong { color: var(--ink); }
+    .ocr-details { display: none; margin-top: 17px; padding-top: 16px; border-top: 1px solid var(--line); }
+    .ocr-details summary { color: var(--green); font-size: 13px; font-weight: 700; cursor: pointer; }
+    .ocr-details p { margin: 10px 0 0; color: var(--muted); font-size: 13px; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .articles-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 28px 0 12px; }
+    .articles-heading h3 { margin: 0; font: 800 18px "Manrope", sans-serif; letter-spacing: -.3px; }
+    .articles-heading span { color: var(--muted); font-size: 12px; }
+    .article-list { display: grid; gap: 11px; }
+    .article { padding: 17px 18px; border: 1px solid var(--line); border-radius: 13px; background: #fff; transition: border-color .2s, transform .2s; }
+    .article:hover { border-color: #abcbb8; transform: translateY(-1px); }
+    .article-source { margin: 0 0 6px; color: var(--green); font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+    .article-title { display: inline-block; color: var(--ink); font: 700 16px/1.4 "Manrope", sans-serif; text-decoration: none; }
+    .article-title:hover { color: var(--green); text-decoration: underline; text-underline-offset: 3px; }
+    .article-description { margin: 8px 0 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
+    .empty-results { padding: 22px; border: 1px solid var(--line); border-radius: 13px; color: var(--muted); background: #fff; font-size: 13px; line-height: 1.6; }
+    .site-footer { padding: 20px 0 28px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; text-align: center; }
+    .site-footer strong { color: var(--ink); }
+    @media (max-width: 640px) {
+      .shell { width: min(100% - 28px, 1000px); }
+      .topbar { height: 65px; }
+      .top-note { max-width: 130px; text-align: right; font-size: 11px; }
+      main { padding: 52px 0 66px; }
+      .intro { margin-bottom: 25px; }
+      h1 { letter-spacing: -1.7px; }
+      .intro-copy { font-size: 15px; }
+      .checker { padding: 17px; border-radius: 17px; }
+      textarea { min-height: 150px; }
+      .upload-row { align-items: flex-start; }
+      .upload-copy { align-items: flex-start; }
+      .upload-icon { flex-basis: 34px; width: 34px; height: 34px; }
+      .form-actions { align-items: stretch; flex-direction: column; }
+      .submit-button { width: 100%; }
+      .result-head { padding: 17px; }
+      .result-head h2 { font-size: 21px; }
+      .result-body { padding: 17px; }
+      .result-count { max-width: 115px; white-space: normal; text-align: center; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    }
+  </style>
 </head>
 <body>
-
-<header class="navbar">
-  <div class="nav-inner">
-    <a href="/" class="brand">
-      <span class="brand-logo">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.8L20 10l-5 4 1.5 6L12 17l-4.5 3L9 14 4 10l6.1-1.2z"/></svg>
-      </span>
-      <span class="brand-text">SIESCOMS<span class="text-gradient">.AI</span></span>
-    </a>
-    <nav class="nav-links">
-      <a href="#detector">Detector</a>
-      <a href="#sources">Sources</a>
-      <a href="#how">How it works</a>
-    </nav>
-    
-  </div>
-</header>
-
-<section class="hero">
-  <div class="orb-blur1"></div>
-  <div class="orb-blur2"></div>
-
-  <div class="aiorb">
-    <div class="aiorb-blur"></div>
-    <div class="aiorb-core"></div>
-    <div class="aiorb-dot"><span></span></div>
-  </div>
-
-  <span class="badge glass animate-fade-in">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.8L20 10l-5 4 1.5 6L12 17l-4.5 3L9 14 4 10l6.1-1.2z"/></svg>
-    NewsAPI search required · ML estimate secondary
-  </span>
-
-  <h1 class="animate-fade-up">AI <span class="text-gradient">Fake News</span><br/> Detector</h1>
-  <p class="animate-fade-up" style="animation-delay:120ms;">
-    Paste a news claim or upload a screenshot. NewsAPI search is required, and matching coverage is shown as evidence to review—not proof that a claim is true or false.
-  </p>
-</section>
-
-<section id="detector" class="detector">
-  <div class="detector-card glass-strong">
-    <div id="scanLine" class="scan-line"></div>
-
-    <div class="live-tag"><span class="live-dot"></span>NewsAPI evidence search · required</div>
-
-    <textarea id="newsText" rows="6" placeholder="Paste a news headline, article, or claim to verify…"></textarea>
-
-    <div id="preview" class="preview">
-      <img id="previewImg" alt="upload preview" />
-      <button type="button" class="preview-remove" onclick="removeImage()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
+  <header class="topbar">
+    <div class="shell topbar-inner">
+      <a class="brand" href="/" aria-label="Rekkod AI home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 20 6v5c0 5-3.3 8.2-8 10-4.7-1.8-8-5-8-10V6l8-3Z"/><path d="m8.5 12 2.2 2.2 4.8-5"/></svg>
+        </span>
+        <span class="brand-name">Rekkod <span>AI</span></span>
+      </a>
+      <span class="top-note">News evidence checker</span>
     </div>
+  </header>
 
-    <div class="actions">
-      <div class="upload-group">
-        <input id="fileInput" type="file" accept="image/png,image/jpeg,image/webp" hidden onchange="onPick(event)" />
-        <button type="button" class="upload-btn glass" onclick="document.getElementById('fileInput').click()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/><path d="M16 5h6M19 2v6"/></svg>
-          Upload image
+  <main class="shell">
+    <section class="intro" aria-labelledby="page-title">
+      <span class="eyebrow"><span class="eyebrow-dot"></span>Evidence-first review</span>
+      <h1 id="page-title">Check a claim.<br />See the coverage.</h1>
+      <p class="intro-copy">Search news coverage for a claim and open the original reports. Related articles are useful evidence to review, but they do not prove a claim on their own.</p>
+    </section>
+
+    <section class="checker" aria-label="Submit a claim for news search">
+      <label class="field-label" for="newsText">
+        <span>What claim do you want to check?</span>
+        <small>Text or screenshot</small>
+      </label>
+      <textarea id="newsText" maxlength="20000" placeholder="Paste the specific statement or news claim here…" aria-describedby="inputHelp"></textarea>
+      <div class="under-field" id="inputHelp">
+        <span>Use the exact claim when possible for more relevant search results.</span>
+        <span id="charCount">0 / 20,000</span>
+      </div>
+
+      <div class="upload-row">
+        <div class="upload-copy">
+          <span class="upload-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9" r="1.5"/><path d="m21 15-5-5L5 20"/><path d="M12 2v5m-2.5-2.5L12 2l2.5 2.5"/></svg>
+          </span>
+          <div>
+            <p class="upload-title">Add a screenshot (optional)</p>
+            <p class="upload-subtitle">JPG, PNG, or WebP · up to 5 MB</p>
+          </div>
+        </div>
+        <input id="fileInput" type="file" accept="image/png,image/jpeg,image/webp" />
+        <button class="file-button" id="chooseImage" type="button">Choose image</button>
+      </div>
+      <div class="preview" id="preview">
+        <img id="previewImg" alt="Selected screenshot preview" />
+        <span class="preview-name" id="previewName"></span>
+        <button class="remove-button" id="removeImage" type="button">Remove</button>
+      </div>
+
+      <div class="form-actions">
+        <p class="privacy-note">NewsAPI search is required. The checker reports related coverage and leaves the verdict inconclusive so you can review the linked sources.</p>
+        <button class="submit-button" id="analyzeBtn" type="button">
+          <span class="spinner" id="spinner" aria-hidden="true"></span>
+          <svg id="searchIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+          <span id="buttonLabel">Search news coverage</span>
         </button>
-        <span class="upload-hint">JPG, PNG · screenshot a tweet or headline</span>
       </div>
+      <p class="error" id="errorMessage" role="alert"></p>
+    </section>
 
-      <button id="analyzeBtn" type="button" class="analyze-btn" onclick="analyze()">
-        <span class="shimmer"></span>
-        <svg id="sendIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-        <svg id="loadIcon" style="display:none" class="animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/></svg>
-        <span id="btnLabel">Analyze News</span>
-      </button>
-    </div>
-    <p id="errorMessage" class="error-message" role="alert"></p>
-  </div>
-
-  <!-- Loading -->
-  <div id="loading" class="loading-panel glass-strong">
-    <div class="loading-row">
-      <div class="loading-orb">
-        <div class="loading-orb-blur"></div>
-        <div class="loading-orb-core">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.8L20 10l-5 4 1.5 6L12 17l-4.5 3L9 14 4 10l6.1-1.2z"/></svg>
+    <section class="results" id="results" aria-live="polite" aria-busy="false">
+      <div class="result-head">
+        <div>
+          <p class="result-kicker">NewsAPI evidence review</p>
+          <h2 id="verdictText">Inconclusive</h2>
         </div>
+        <span class="result-count" id="articleCount">0 matching articles</span>
       </div>
-      <div class="loading-info">
-        <p>Searching NewsAPI for related coverage…</p>
-        <div class="bar"><div></div></div>
-        <div class="steps">
-          <span>Searching reports</span><span>Reviewing headlines</span><span>Preparing evidence</span>
+      <div class="result-body">
+        <p class="result-summary" id="evidenceSummary"></p>
+        <p class="secondary-estimate" id="classifierEstimate"></p>
+        <details class="ocr-details" id="ocrDetails">
+          <summary>View text read from the screenshot</summary>
+          <p id="ocrText"></p>
+        </details>
+        <div class="articles-heading">
+          <h3>Related coverage</h3>
+          <span id="showingCount"></span>
         </div>
+        <div class="article-list" id="articleList"></div>
       </div>
-    </div>
-  </div>
+    </section>
+  </main>
 
-  <!-- Result -->
-  <div id="result" class="result">
-    <div id="resultCard" class="result-card glass-strong">
-      <div class="result-top">
-        <div class="verdict-row">
-          <div id="verdictIcon" class="verdict-icon">
-            <svg id="verdictSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></svg>
-          </div>
-          <div>
-            <p class="verdict-label">NewsAPI evidence check</p>
-            <h3 id="verdictText" class="verdict-text">Inconclusive</h3>
-          </div>
-        </div>
-        <div class="confidence">
-          <div>
-            <p id="articleCount">0 matching articles</p>
-            <p>NewsAPI search results</p>
-          </div>
-        </div>
-      </div>
-      <div id="signals" class="signals"></div>
-    </div>
-  </div>
-</section>
+  <footer class="site-footer">
+    <div class="shell"><strong>Rekkod AI</strong> · Search the coverage. Review the sources.</div>
+  </footer>
 
-<section id="sources" class="sources-section">
-  <div class="sources-head">
-    <div>
-      <p class="eyebrow">Source examples</p>
-      <h2>What this tool checks</h2>
-    </div>
-      <p>NewsAPI searches article titles and descriptions. Related results are evidence to review; they do not confirm or refute a claim by themselves.</p>
-  </div>
-  <div class="sources-grid">
-    <!-- Generated server-side or static -->
-    <!-- Items: -->
-  </div>
-</section>
+  <script>
+    const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+    let uploadedImage = null;
 
-<section id="how" class="how-section">
-  <div class="how-head">
-    <p class="eyebrow">How it works</p>
-    <h2>How the evidence search works</h2>
-  </div>
-  <div class="how-grid">
-    <div class="step glass-strong" style="animation-delay:0ms">
-      <div class="step-num">01</div>
-      <div class="step-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
-      <h3>Submit</h3>
-      <p>Drop in text or upload a screenshot — we accept anything.</p>
-    </div>
-    <div class="step glass-strong" style="animation-delay:100ms">
-      <div class="step-num">02</div>
-      <div class="step-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a4 4 0 0 0-4 4v1a4 4 0 0 0-4 4 4 4 0 0 0 1 2.6A4 4 0 0 0 8 20a4 4 0 0 0 4 2 4 4 0 0 0 4-2 4 4 0 0 0 3-6.4A4 4 0 0 0 16 7V6a4 4 0 0 0-4-4z"/></svg></div>
-      <h3>Analyze</h3>
-      <p>The claim is searched against NewsAPI article headlines and descriptions.</p>
-    </div>
-    <div class="step glass-strong" style="animation-delay:200ms">
-      <div class="step-num">03</div>
-      <div class="step-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg></div>
-      <h3>Verify</h3>
-      <p>Review the linked reports. Related coverage alone cannot confirm a claim.</p>
-    </div>
-  </div>
-</section>
+    const newsInput = document.getElementById('newsText');
+    const fileInput = document.getElementById('fileInput');
+    const errorMessage = document.getElementById('errorMessage');
+    const analyzeButton = document.getElementById('analyzeBtn');
+    const resultsSection = document.getElementById('results');
 
-<footer>© SIESCOMS.AI — built for truth.</footer>
-
-<script>
-const SOURCES = [
-  { name: "Reuters", tag: "Newswire" },
-  { name: "Associated Press", tag: "Newswire" },
-  { name: "BBC News", tag: "Broadcast" },
-  { name: "The Guardian", tag: "Print" },
-  { name: "NPR", tag: "Public radio" },
-  { name: "Bloomberg", tag: "Finance" },
-  { name: "Nature", tag: "Science" },
-  { name: "Snopes", tag: "Fact-check" },
-];
-const grid = document.querySelector('.sources-grid');
-SOURCES.forEach((source, index) => {
-  const card = document.createElement('div');
-  card.className = 'source glass';
-  card.style.animationDelay = `${index * 60}ms`;
-  card.innerHTML = '<div class="source-glow"></div><div class="source-top"><div class="source-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div></div><p class="source-name"></p><p class="source-tag"></p>';
-  card.querySelector('.source-name').textContent = source.name;
-  card.querySelector('.source-tag').textContent = source.tag;
-  grid.appendChild(card);
-});
-
-let uploadedImage = null;
-function onPick(event) {
-  const file = event.target.files && event.target.files[0];
-  if (!file) return;
-  const error = document.getElementById('errorMessage');
-  if (file.size > 5 * 1024 * 1024) {
-    error.textContent = 'Choose an image smaller than 5 MB.';
-    error.style.display = 'block';
-    event.target.value = '';
-    return;
-  }
-  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-    error.textContent = 'Choose a JPG, PNG, or WebP image.';
-    error.style.display = 'block';
-    event.target.value = '';
-    return;
-  }
-  error.style.display = 'none';
-  const reader = new FileReader();
-  reader.onload = (result) => {
-    uploadedImage = result.target.result;
-    document.getElementById('previewImg').src = uploadedImage;
-    document.getElementById('preview').style.display = 'inline-block';
-  };
-  reader.onerror = () => {
-    error.textContent = 'The selected image could not be read.';
-    error.style.display = 'block';
-  };
-  reader.readAsDataURL(file);
-}
-function removeImage() {
-  uploadedImage = null;
-  document.getElementById('preview').style.display = 'none';
-  document.getElementById('previewImg').src = '';
-  document.getElementById('fileInput').value = '';
-}
-
-const SHIELD_CHECK = '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/>';
-const SHIELD_ALERT = '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="13"/><line x1="12" y1="16" x2="12" y2="16"/>';
-
-async function analyze() {
-  const news = document.getElementById('newsText').value.trim();
-  const error = document.getElementById('errorMessage');
-  error.style.display = 'none';
-  if (!news && !uploadedImage) {
-    error.textContent = 'Enter some news text or upload an image first.';
-    error.style.display = 'block';
-    return;
-  }
-
-  const button = document.getElementById('analyzeBtn');
-  button.disabled = true;
-  document.getElementById('sendIcon').style.display = 'none';
-  document.getElementById('loadIcon').style.display = 'inline';
-  document.getElementById('btnLabel').textContent = 'Analyzing…';
-  document.getElementById('result').style.display = 'none';
-  document.getElementById('loading').style.display = 'block';
-  document.getElementById('scanLine').style.display = 'block';
-
-  try {
-    const response = await fetch('/analyze', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ news, image: uploadedImage })
+    newsInput.addEventListener('input', () => {
+      document.getElementById('charCount').textContent = `${newsInput.value.length.toLocaleString()} / 20,000`;
     });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || 'The analysis request failed.');
-    renderResult({
-      factCheckStatus: data.fact_check_status,
-      evidenceSummary: data.evidence_summary,
-      totalResults: data.total_results,
-      classifierEstimate: data.classifier_estimate,
-      classifierProbability: data.classifier_probability,
-      ocr: data.ocr_text,
-      articles: data.articles || []
+
+    document.getElementById('chooseImage').addEventListener('click', () => fileInput.click());
+    document.getElementById('removeImage').addEventListener('click', removeImage);
+    analyzeButton.addEventListener('click', analyze);
+
+    fileInput.addEventListener('change', (event) => {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      if (file.size > MAX_IMAGE_BYTES) {
+        showError('Choose an image smaller than 5 MB.');
+        fileInput.value = '';
+        return;
+      }
+      if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+        showError('Choose a JPG, PNG, or WebP image.');
+        fileInput.value = '';
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        uploadedImage = reader.result;
+        document.getElementById('previewImg').src = uploadedImage;
+        document.getElementById('previewName').textContent = file.name;
+        document.getElementById('preview').style.display = 'flex';
+        errorMessage.style.display = 'none';
+      };
+      reader.onerror = () => showError('The selected image could not be read.');
+      reader.readAsDataURL(file);
     });
-  } catch (exception) {
-    error.textContent = exception.message || 'Unable to connect to the analysis service.';
-    error.style.display = 'block';
-  } finally {
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('scanLine').style.display = 'none';
-    button.disabled = false;
-    document.getElementById('sendIcon').style.display = 'inline';
-    document.getElementById('loadIcon').style.display = 'none';
-    document.getElementById('btnLabel').textContent = 'Analyze News';
-  }
-}
 
-function renderResult(result) {
-  const card = document.getElementById('resultCard');
-  const icon = document.getElementById('verdictIcon');
-  icon.classList.remove('real', 'fake');
-  document.getElementById('verdictSvg').innerHTML = SHIELD_ALERT;
-  document.getElementById('verdictText').textContent = 'Inconclusive';
-  const count = Number(result.totalResults) || 0;
-  document.getElementById('articleCount').textContent = `${count} matching article${count === 1 ? '' : 's'}`;
+    function removeImage() {
+      uploadedImage = null;
+      fileInput.value = '';
+      document.getElementById('previewImg').removeAttribute('src');
+      document.getElementById('previewName').textContent = '';
+      document.getElementById('preview').style.display = 'none';
+    }
 
-  const signals = document.getElementById('signals');
-  signals.replaceChildren();
-  const summary = document.createElement('div');
-  summary.className = 'signal';
-  const summaryLabel = document.createElement('span');
-  summaryLabel.className = 'signal-label';
-  summaryLabel.textContent = 'Evidence result';
-  const summaryText = document.createElement('p');
-  summaryText.textContent = result.evidenceSummary || 'NewsAPI did not return an evidence summary.';
-  summary.append(summaryLabel, summaryText);
-  signals.appendChild(summary);
+    function showError(message) {
+      errorMessage.textContent = message;
+      errorMessage.style.display = 'block';
+    }
 
-  if (result.classifierEstimate) {
-    const estimate = document.createElement('div');
-    estimate.className = 'signal';
-    const estimateLabel = document.createElement('span');
-    estimateLabel.className = 'signal-label';
-    estimateLabel.textContent = 'ML estimate (not a fact-check)';
-    const estimateText = document.createElement('p');
-    estimateText.textContent = `${result.classifierEstimate} · ${result.classifierProbability}% model probability`;
-    estimate.append(estimateLabel, estimateText);
-    signals.appendChild(estimate);
-  }
+    function setLoading(isLoading) {
+      analyzeButton.disabled = isLoading;
+      resultsSection.setAttribute('aria-busy', String(isLoading));
+      document.getElementById('spinner').style.display = isLoading ? 'block' : 'none';
+      document.getElementById('searchIcon').style.display = isLoading ? 'none' : 'block';
+      document.getElementById('buttonLabel').textContent = isLoading ? 'Searching NewsAPI…' : 'Search news coverage';
+    }
 
-  if (result.ocr && result.ocr.trim()) {
-    const box = document.createElement('div');
-    box.className = 'signal';
-    const label = document.createElement('span');
-    label.className = 'signal-label';
-    label.textContent = 'OCR Extracted Text';
-    const extracted = document.createElement('p');
-    extracted.textContent = result.ocr;
-    box.append(label, extracted);
-    signals.appendChild(box);
-  }
-  (result.articles || []).forEach((article) => {
-    const box = document.createElement('div');
-    box.className = 'signal';
-    const link = document.createElement('a');
-    link.className = 'signal-label';
-    link.textContent = article.title || 'Related article';
-    link.href = article.url;
-    link.target = '_blank';
-    link.rel = 'noopener noreferrer';
-    const source = document.createElement('p');
-    source.textContent = `${article.source || 'Unknown source'}${article.published_at ? ` · ${article.published_at}` : ''}`;
-    const description = document.createElement('p');
-    description.textContent = article.description || 'No article description provided by NewsAPI.';
-    box.append(link, source, description);
-    signals.appendChild(box);
-  });
-  document.getElementById('result').style.display = 'block';
-}
-</script>
+    async function analyze() {
+      const news = newsInput.value.trim();
+      errorMessage.style.display = 'none';
+      if (!news && !uploadedImage) {
+        showError('Enter a claim or upload a screenshot first.');
+        newsInput.focus();
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const response = await fetch('/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ news, image: uploadedImage })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'The news search could not be completed.');
+        renderResults(data);
+      } catch (error) {
+        showError(error.message || 'Unable to connect to the analysis service.');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    function makeArticle(article) {
+      const card = document.createElement('article');
+      card.className = 'article';
+
+      const source = document.createElement('p');
+      source.className = 'article-source';
+      source.textContent = article.source || 'News source';
+
+      const title = document.createElement('a');
+      title.className = 'article-title';
+      title.textContent = article.title || 'Open related article';
+      try {
+        const url = new URL(article.url);
+        if (url.protocol === 'https:' || url.protocol === 'http:') {
+          title.href = url.href;
+          title.target = '_blank';
+          title.rel = 'noopener noreferrer';
+        }
+      } catch (_) {
+        title.removeAttribute('href');
+      }
+
+      const description = document.createElement('p');
+      description.className = 'article-description';
+      description.textContent = article.description || 'NewsAPI did not provide a description for this article.';
+
+      card.append(source, title, description);
+      return card;
+    }
+
+    function renderResults(data) {
+      const articles = Array.isArray(data.articles) ? data.articles : [];
+      const total = Number(data.total_results) || 0;
+      document.getElementById('verdictText').textContent = 'Inconclusive';
+      document.getElementById('articleCount').textContent = `${total.toLocaleString()} matching article${total === 1 ? '' : 's'}`;
+      document.getElementById('evidenceSummary').textContent = data.evidence_summary || 'Review the article links below; related coverage is not proof.';
+      document.getElementById('showingCount').textContent = articles.length ? `Showing ${articles.length}` : '';
+
+      const estimate = document.getElementById('classifierEstimate');
+      if (data.classifier_estimate) {
+        estimate.replaceChildren();
+        const label = document.createElement('strong');
+        label.textContent = 'Separate ML estimate (not a fact-check): ';
+        estimate.append(label, document.createTextNode(`${data.classifier_estimate} · ${data.classifier_probability}% model probability`));
+        estimate.style.display = 'block';
+      } else {
+        estimate.style.display = 'none';
+      }
+
+      const ocrDetails = document.getElementById('ocrDetails');
+      if (data.ocr_text && data.ocr_text.trim()) {
+        document.getElementById('ocrText').textContent = data.ocr_text;
+        ocrDetails.style.display = 'block';
+      } else {
+        ocrDetails.style.display = 'none';
+      }
+
+      const list = document.getElementById('articleList');
+      list.replaceChildren();
+      if (articles.length) {
+        articles.forEach((article) => list.appendChild(makeArticle(article)));
+      } else {
+        const empty = document.createElement('p');
+        empty.className = 'empty-results';
+        empty.textContent = 'NewsAPI found no matching articles. That does not mean the claim is false—try a shorter or more specific wording.';
+        list.appendChild(empty);
+      }
+
+      resultsSection.style.display = 'block';
+      requestAnimationFrame(() => resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+    }
+  </script>
 </body>
 </html>

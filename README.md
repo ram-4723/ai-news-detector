@@ -1,6 +1,6 @@
-# AI Fake News Detector
+# Rekkod AI — News Evidence Checker
 
-A Flask application that requires NewsAPI to search for articles related to submitted text. It extracts text from uploaded images with Tesseract OCR and shows matching article links as evidence for the user to review. A saved TF-IDF/Naive Bayes model is shown only as a secondary estimate.
+A focused Flask application that requires NewsAPI to search for articles related to a submitted claim. It extracts text from uploaded images with Tesseract OCR and shows matching article links as evidence for the user to review. A saved TF-IDF/Naive Bayes model is shown only as a secondary estimate.
 
 ## Deploy to Render
 

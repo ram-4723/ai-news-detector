@@ -1,8 +1,7 @@
-flask
-scikit-learn
-requests
-gunicorn
-pandas
-numpy
-pytesseract
-Pillow
+Flask>=3.1,<4
+gunicorn>=23,<24
+Pillow>=11,<13
+pytesseract>=0.3.13,<0.4
+requests>=2.32,<3
+# The committed model artifacts were serialized with scikit-learn 1.8.0.
+scikit-learn==1.8.0

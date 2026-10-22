@@ -122,6 +122,7 @@ textarea:focus{border-color:rgba(160,107,255,.6);box-shadow:0 0 0 2px rgba(160,1
 
 .actions{margin-top:20px;display:flex;flex-direction:column-reverse;gap:12px;}
 @media(min-width:640px){.actions{flex-direction:row;align-items:center;justify-content:space-between;}}
+.error-message{display:none;margin-top:14px;color:var(--destructive);font-size:14px;}
 .upload-group{display:flex;align-items:center;gap:8px;}
 .upload-btn{display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:12px;font-size:14px;font-weight:500;transition:all .2s;}
 .upload-btn:hover{background:rgba(255,255,255,.10);box-shadow:var(--shadow-glow-cyan);}
@@ -258,7 +259,7 @@ footer{padding:32px 24px;text-align:center;color:var(--muted);font-size:13px;bor
 
   <h1 class="animate-fade-up">AI <span class="text-gradient">Fake News</span><br/> Detector</h1>
   <p class="animate-fade-up" style="animation-delay:120ms;">
-    Paste any article, headline, or upload a screenshot. Our AI cross-references trusted sources and returns a confidence score in seconds.
+    Paste an article or headline, or upload a screenshot. The classifier estimates a label, and related news articles can be fetched when NewsAPI is configured.
   </p>
 </section>
 
@@ -279,7 +280,7 @@ footer{padding:32px 24px;text-align:center;color:var(--muted);font-size:13px;bor
 
     <div class="actions">
       <div class="upload-group">
-        <input id="fileInput" type="file" accept="image/*" hidden onchange="onPick(event)" />
+        <input id="fileInput" type="file" accept="image/png,image/jpeg,image/webp" hidden onchange="onPick(event)" />
         <button type="button" class="upload-btn glass" onclick="document.getElementById('fileInput').click()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/><path d="M16 5h6M19 2v6"/></svg>
           Upload image
@@ -294,6 +295,7 @@ footer{padding:32px 24px;text-align:center;color:var(--muted);font-size:13px;bor
         <span id="btnLabel">Analyze News</span>
       </button>
     </div>
+    <p id="errorMessage" class="error-message" role="alert"></p>
   </div>
 
   <!-- Loading -->
@@ -338,7 +340,7 @@ footer{padding:32px 24px;text-align:center;color:var(--muted);font-size:13px;bor
           </div>
           <div>
             <p>Confidence</p>
-            <p>Model certainty</p>
+            <p>Model probability</p>
           </div>
         </div>
       </div>
@@ -351,9 +353,9 @@ footer{padding:32px 24px;text-align:center;color:var(--muted);font-size:13px;bor
   <div class="sources-head">
     <div>
       <p class="eyebrow">Trusted Sources</p>
-      <h2>Cross-checked against the world's most reliable outlets</h2>
+      <h2>What this tool checks</h2>
     </div>
-    <p>Our model continuously indexes vetted journalism, fact-check databases and primary sources.</p>
+    <p>These are example outlets to check yourself. They are not inputs to the classifier, and their names do not verify a result.</p>
   </div>
   <div class="sources-grid">
     <!-- Generated server-side or static -->
@@ -377,13 +379,13 @@ footer{padding:32px 24px;text-align:center;color:var(--muted);font-size:13px;bor
       <div class="step-num">02</div>
       <div class="step-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a4 4 0 0 0-4 4v1a4 4 0 0 0-4 4 4 4 0 0 0 1 2.6A4 4 0 0 0 8 20a4 4 0 0 0 4 2 4 4 0 0 0 4-2 4 4 0 0 0 3-6.4A4 4 0 0 0 16 7V6a4 4 0 0 0-4-4z"/></svg></div>
       <h3>Analyze</h3>
-      <p>Multimodal LLMs parse claims, sentiment, and stance.</p>
+      <p>The included text classifier compares language patterns with its training data.</p>
     </div>
     <div class="step glass-strong" style="animation-delay:200ms">
       <div class="step-num">03</div>
       <div class="step-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg></div>
       <h3>Verify</h3>
-      <p>Cross-reference against millions of vetted articles in real time.</p>
+      <p>Optionally search NewsAPI for related coverage to review yourself.</p>
     </div>
   </div>
 </section>
@@ -391,243 +393,156 @@ footer{padding:32px 24px;text-align:center;color:var(--muted);font-size:13px;bor
 <footer>© SIESCOMS.AI — built for truth.</footer>
 
 <script>
-/* Inject trusted sources (could be Jinja-rendered server-side) */
 const SOURCES = [
-  { name: "Reuters", tag: "Newswire", score: 98 },
-  { name: "Associated Press", tag: "Newswire", score: 98 },
-  { name: "BBC News", tag: "Broadcast", score: 96 },
-  { name: "The Guardian", tag: "Print", score: 94 },
-  { name: "NPR", tag: "Public radio", score: 95 },
-  { name: "Bloomberg", tag: "Finance", score: 93 },
-  { name: "Nature", tag: "Science", score: 99 },
-  { name: "Snopes", tag: "Fact-check", score: 92 },
+  { name: "Reuters", tag: "Newswire" },
+  { name: "Associated Press", tag: "Newswire" },
+  { name: "BBC News", tag: "Broadcast" },
+  { name: "The Guardian", tag: "Print" },
+  { name: "NPR", tag: "Public radio" },
+  { name: "Bloomberg", tag: "Finance" },
+  { name: "Nature", tag: "Science" },
+  { name: "Snopes", tag: "Fact-check" },
 ];
 const grid = document.querySelector('.sources-grid');
-SOURCES.forEach((s, i) => {
-  const el = document.createElement('div');
-  el.className = 'source glass';
-  el.style.animationDelay = (i * 60) + 'ms';
-  el.innerHTML = `
-    <div class="source-glow"></div>
-    <div class="source-top">
-      <div class="source-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
-      <span class="source-score">${s.score}</span>
-    </div>
-    <p class="source-name">${s.name}</p>
-    <p class="source-tag">${s.tag}</p>`;
-  grid.appendChild(el);
+SOURCES.forEach((source, index) => {
+  const card = document.createElement('div');
+  card.className = 'source glass';
+  card.style.animationDelay = `${index * 60}ms`;
+  card.innerHTML = '<div class="source-glow"></div><div class="source-top"><div class="source-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div></div><p class="source-name"></p><p class="source-tag"></p>';
+  card.querySelector('.source-name').textContent = source.name;
+  card.querySelector('.source-tag').textContent = source.tag;
+  grid.appendChild(card);
 });
 
-/* Image upload */
 let uploadedImage = null;
-function onPick(e){
-  const f = e.target.files && e.target.files[0];
-  if(!f) return;
-  const r = new FileReader();
-  r.onload = ev => {
-
-  uploadedImage = ev.target.result;
-
-  document.getElementById('previewImg').src = ev.target.result;
-
-  document.getElementById('preview').style.display = 'inline-block';
-};
-  r.readAsDataURL(f);
+function onPick(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  const error = document.getElementById('errorMessage');
+  if (file.size > 5 * 1024 * 1024) {
+    error.textContent = 'Choose an image smaller than 5 MB.';
+    error.style.display = 'block';
+    event.target.value = '';
+    return;
+  }
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+    error.textContent = 'Choose a JPG, PNG, or WebP image.';
+    error.style.display = 'block';
+    event.target.value = '';
+    return;
+  }
+  error.style.display = 'none';
+  const reader = new FileReader();
+  reader.onload = (result) => {
+    uploadedImage = result.target.result;
+    document.getElementById('previewImg').src = uploadedImage;
+    document.getElementById('preview').style.display = 'inline-block';
+  };
+  reader.onerror = () => {
+    error.textContent = 'The selected image could not be read.';
+    error.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
 }
-function removeImage(){
+function removeImage() {
   uploadedImage = null;
   document.getElementById('preview').style.display = 'none';
   document.getElementById('previewImg').src = '';
   document.getElementById('fileInput').value = '';
 }
 
-/* Mock analyzer (frontend only) */
-const FAKE_HINTS = ["shocking","miracle","you won't believe","secret","anonymous source","viral"];
-function mockAnalyze(text){
-  const lower = text.toLowerCase();
-  const hits = FAKE_HINTS.filter(k => lower.includes(k)).length;
-  const isFake = hits > 0 || text.length < 40;
-  const base = isFake ? 72 + hits*5 : 84 + Math.min(text.length/80, 12);
-  const confidence = Math.min(98, Math.round(base + Math.random()*4));
-  return {
-    verdict: isFake ? 'fake' : 'real',
-    confidence,
-    reasons: isFake
-      ? ["Sensational language patterns detected","Lacks verifiable cited sources","Cross-reference with trusted outlets failed"]
-      : ["Linguistic markers align with factual reporting","Consistent with multiple trusted sources","Neutral tone & verifiable claims identified"]
-  };
-}
-
 const SHIELD_CHECK = '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/>';
 const SHIELD_ALERT = '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="13"/><line x1="12" y1="16" x2="12" y2="16"/>';
 
-async function analyze(){
+async function analyze() {
+  const news = document.getElementById('newsText').value.trim();
+  const error = document.getElementById('errorMessage');
+  error.style.display = 'none';
+  if (!news && !uploadedImage) {
+    error.textContent = 'Enter some news text or upload an image first.';
+    error.style.display = 'block';
+    return;
+  }
 
-  const text = document.getElementById('newsText').value.trim();
-
-  const hasImage =
-    document.getElementById('preview').style.display !== 'none';
-
-  if(!text && !hasImage) return;
-
-  const btn = document.getElementById('analyzeBtn');
-
-  btn.disabled = true;
-
+  const button = document.getElementById('analyzeBtn');
+  button.disabled = true;
   document.getElementById('sendIcon').style.display = 'none';
   document.getElementById('loadIcon').style.display = 'inline';
-
   document.getElementById('btnLabel').textContent = 'Analyzing…';
-
   document.getElementById('result').style.display = 'none';
-
   document.getElementById('loading').style.display = 'block';
-
   document.getElementById('scanLine').style.display = 'block';
 
   try {
-
     const response = await fetch('/analyze', {
-
       method: 'POST',
-
-      headers: {
-        'Content-Type': 'application/json'
-      },
-
-      body: JSON.stringify({
-  news: text,
-  image: uploadedImage
-})
-
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ news, image: uploadedImage })
     });
-
     const data = await response.json();
-
+    if (!response.ok) throw new Error(data.error || 'The analysis request failed.');
     renderResult({
-      verdict:
-        data.prediction.includes("Real")
-        ? "real"
-        : "fake",
-
+      verdict: data.prediction.includes('Real') ? 'real' : 'fake',
       confidence: data.confidence,
       ocr: data.ocr_text,
-
-      reasons:
-  data.prediction.includes("Real")
-  ? [
-      "Trusted content patterns detected",
-      "Language structure appears credible",
-      "Cross-reference analysis completed"
-    ]
-  : [
-      "Potential misinformation patterns detected",
-      "Limited trusted verification found",
-      "Cross-reference confidence is low"
-    ]
-    
+      articles: data.articles || []
     });
-
-  } catch(error){
-
-    alert("Error connecting to AI model");
-
+  } catch (exception) {
+    error.textContent = exception.message || 'Unable to connect to the analysis service.';
+    error.style.display = 'block';
+  } finally {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('scanLine').style.display = 'none';
+    button.disabled = false;
+    document.getElementById('sendIcon').style.display = 'inline';
+    document.getElementById('loadIcon').style.display = 'none';
+    document.getElementById('btnLabel').textContent = 'Analyze News';
   }
+}
 
-  document.getElementById('loading').style.display = 'none';
-
-  document.getElementById('scanLine').style.display = 'none';
-
-  btn.disabled = false;
-
-  document.getElementById('sendIcon').style.display = 'inline';
-
-  document.getElementById('loadIcon').style.display = 'none';
-
-  document.getElementById('btnLabel').textContent = 'Analyze News';
-};
-
-
-function renderResult(res){
-
-  const isReal = res.verdict === 'real';
-
+function renderResult(result) {
+  const isReal = result.verdict === 'real';
   const card = document.getElementById('resultCard');
-
-  card.classList.remove('real','fake');
-
+  card.classList.remove('real', 'fake');
   card.classList.add(isReal ? 'real' : 'fake');
-
   const icon = document.getElementById('verdictIcon');
-
-  icon.classList.remove('real','fake');
-
+  icon.classList.remove('real', 'fake');
   icon.classList.add(isReal ? 'real' : 'fake');
+  document.getElementById('verdictSvg').innerHTML = isReal ? SHIELD_CHECK : SHIELD_ALERT;
+  document.getElementById('verdictText').textContent = isReal ? 'Likely Real' : 'Likely Fake';
 
-  document.getElementById('verdictSvg').innerHTML =
-    isReal ? SHIELD_CHECK : SHIELD_ALERT;
-
-  document.getElementById('verdictText').textContent =
-    isReal ? 'Likely Real' : 'Likely Fake';
-
-  // Confidence Ring
+  const confidence = Math.max(0, Math.min(100, Number(result.confidence) || 0));
+  const circumference = 2 * Math.PI * 32;
   const ring = document.getElementById('ringProgress');
+  ring.setAttribute('stroke', isReal ? 'var(--success)' : 'var(--destructive)');
+  ring.setAttribute('stroke-dashoffset', circumference - (confidence / 100) * circumference);
+  document.getElementById('ringPct').textContent = `${confidence}%`;
 
-  const c = 2 * Math.PI * 32;
-
-  ring.setAttribute(
-    'stroke',
-    isReal ? 'var(--success)' : 'var(--destructive)'
-  );
-
-  ring.setAttribute(
-    'stroke-dashoffset',
-    c - (res.confidence / 100) * c
-  );
-
-  document.getElementById('ringPct').textContent =
-    res.confidence + '%';
-
-  // SIGNALS
   const signals = document.getElementById('signals');
-
-  signals.innerHTML = '';
-
-  // OCR BOX
-  if(res.ocr && res.ocr.trim() !== ''){
-
-    const ocrBox = document.createElement('div');
-
-    ocrBox.className = 'signal';
-
-    ocrBox.innerHTML = `
-      <span class="signal-label">
-        OCR Extracted Text
-      </span>
-      ${res.ocr}
-    `;
-
-    signals.appendChild(ocrBox);
+  signals.replaceChildren();
+  if (result.ocr && result.ocr.trim()) {
+    const box = document.createElement('div');
+    box.className = 'signal';
+    const label = document.createElement('span');
+    label.className = 'signal-label';
+    label.textContent = 'OCR Extracted Text';
+    const extracted = document.createElement('p');
+    extracted.textContent = result.ocr;
+    box.append(label, extracted);
+    signals.appendChild(box);
   }
-
-  // NORMAL SIGNALS
-  res.reasons.forEach((r, i) => {
-
-    const d = document.createElement('div');
-
-    d.className = 'signal';
-
-    d.innerHTML = `
-      <span class="signal-label">
-        Signal ${i+1}
-      </span>
-      ${r}
-    `;
-
-    signals.appendChild(d);
+  (result.articles || []).forEach((article) => {
+    const box = document.createElement('div');
+    box.className = 'signal';
+    const link = document.createElement('a');
+    link.className = 'signal-label';
+    link.textContent = article.title || 'Related article';
+    link.href = article.url;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    box.appendChild(link);
+    signals.appendChild(box);
   });
-
-  // SHOW RESULT
   document.getElementById('result').style.display = 'block';
 }
 </script>

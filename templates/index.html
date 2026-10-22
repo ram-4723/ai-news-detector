@@ -31,7 +31,7 @@
     button, textarea { font: inherit; }
     button, a { -webkit-tap-highlight-color: transparent; }
     a { color: inherit; }
-    .shell { width: min(100% - 40px, 1000px); margin-inline: auto; }
+    .shell { width: min(100% - 40px, 1320px); margin-inline: auto; }
     .topbar { height: 76px; display: flex; align-items: center; border-bottom: 1px solid var(--line); }
     .topbar-inner { display: flex; align-items: center; justify-content: space-between; }
     .brand { display: inline-flex; align-items: center; gap: 11px; color: var(--ink); text-decoration: none; }
@@ -40,14 +40,16 @@
     .brand-name { font: 800 20px/1 "Manrope", sans-serif; letter-spacing: -.8px; }
     .brand-name span { color: var(--green); }
     .top-note { color: var(--muted); font-size: 13px; }
-    main { padding: 76px 0 90px; }
-    .intro { max-width: 720px; margin: 0 auto 35px; text-align: center; }
+    main { padding: 38px 0 52px; }
+    .intro { max-width: 800px; margin: 0 0 28px; }
     .eyebrow { display: inline-flex; align-items: center; gap: 8px; color: var(--green); font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
     .eyebrow-dot { width: 7px; height: 7px; border-radius: 50%; background: #78a923; }
     h1, h2, h3, p { margin-top: 0; }
-    h1 { margin: 17px 0 14px; font: 800 clamp(36px, 6vw, 58px)/1.08 "Manrope", sans-serif; letter-spacing: -2.6px; }
-    .intro-copy { max-width: 600px; margin: 0 auto; color: var(--muted); font-size: 17px; line-height: 1.65; }
-    .checker { max-width: 780px; margin: 0 auto; padding: 27px; border: 1px solid var(--line); border-radius: 22px; background: var(--surface); box-shadow: var(--shadow); }
+    h1 { margin: 12px 0 8px; font: 800 clamp(32px, 4vw, 46px)/1.08 "Manrope", sans-serif; letter-spacing: -2px; }
+    .intro-copy { max-width: 700px; margin: 0; color: var(--muted); font-size: 15px; line-height: 1.6; }
+    .workspace { display: grid; grid-template-columns: minmax(340px, .88fr) minmax(0, 1.12fr); align-items: start; gap: 22px; }
+    .checker { min-width: 0; padding: 24px; border: 1px solid var(--line); border-radius: 22px; background: var(--surface); box-shadow: var(--shadow); }
+    .panel-title { margin: 0 0 18px; font: 800 18px "Manrope", sans-serif; letter-spacing: -.4px; }
     .field-label { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; font-size: 14px; font-weight: 700; }
     .field-label small { color: var(--muted); font-size: 12px; font-weight: 500; }
     textarea { display: block; width: 100%; min-height: 185px; resize: vertical; padding: 17px; border: 1px solid var(--line); border-radius: 14px; outline: 0; color: var(--ink); background: #fbfcfa; font-size: 15px; line-height: 1.6; transition: border-color .2s, box-shadow .2s; }
@@ -75,12 +77,24 @@
     .spinner { display: none; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%; animation: spin .8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
     .error { display: none; margin: 15px 0 0; padding: 12px 14px; border: 1px solid #f2c4bd; border-radius: 10px; color: #8f3023; background: #fff2ef; font-size: 13px; line-height: 1.5; }
-    .results { display: none; max-width: 780px; margin: 28px auto 0; scroll-margin-top: 22px; }
-    .result-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; padding: 22px 24px; border: 1px solid #d9e6dc; border-radius: 18px 18px 0 0; background: #eef6ef; }
+    .results { display: flex; flex-direction: column; min-width: 0; min-height: 540px; max-height: min(760px, calc(100vh - 210px)); overflow: hidden; border: 1px solid var(--line); border-radius: 22px; background: var(--surface); box-shadow: var(--shadow); }
+    .results-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 20px 22px; border-bottom: 1px solid var(--line); }
+    .results-top h2 { margin: 0; font: 800 18px "Manrope", sans-serif; letter-spacing: -.4px; }
+    .live-state { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); font-size: 12px; }
+    .live-state::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #a8b3ae; }
+    .results[aria-busy="true"] .live-state::before { background: #d88a25; animation: pulse 1s infinite; }
+    .results.has-results .live-state::before { background: #4d9e70; }
+    @keyframes pulse { 50% { opacity: .35; } }
+    .result-placeholder { display: grid; flex: 1; place-content: center; justify-items: center; gap: 12px; padding: 36px; color: var(--muted); text-align: center; }
+    .result-placeholder svg { width: 42px; height: 42px; color: #8aa397; }
+    .result-placeholder strong { color: var(--ink); font: 700 17px "Manrope", sans-serif; }
+    .result-placeholder p { max-width: 340px; margin: 0; font-size: 13px; line-height: 1.6; }
+    .result-content { display: none; flex: 1; min-height: 0; overflow: auto; }
+    .result-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; padding: 22px 24px; border-bottom: 1px solid #d9e6dc; background: #eef6ef; }
     .result-kicker { margin-bottom: 6px; color: var(--green); font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
     .result-head h2 { margin: 0; font: 800 24px/1.2 "Manrope", sans-serif; letter-spacing: -.7px; }
     .result-count { flex: 0 0 auto; padding: 8px 11px; border: 1px solid #d2e2d6; border-radius: 999px; color: var(--green-dark); background: #fff; font-size: 12px; font-weight: 700; }
-    .result-body { padding: 21px 24px; border: 1px solid var(--line); border-top: 0; border-radius: 0 0 18px 18px; background: #fff; box-shadow: var(--shadow); }
+    .result-body { padding: 21px 24px; background: #fff; }
     .result-summary { margin: 0; color: #40534d; font-size: 14px; line-height: 1.65; }
     .secondary-estimate { display: none; margin-top: 15px; padding: 11px 13px; border-radius: 10px; color: #53635d; background: #f4f6f3; font-size: 12px; line-height: 1.5; }
     .secondary-estimate strong { color: var(--ink); }
@@ -100,14 +114,15 @@
     .empty-results { padding: 22px; border: 1px solid var(--line); border-radius: 13px; color: var(--muted); background: #fff; font-size: 13px; line-height: 1.6; }
     .site-footer { padding: 20px 0 28px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; text-align: center; }
     .site-footer strong { color: var(--ink); }
-    @media (max-width: 640px) {
-      .shell { width: min(100% - 28px, 1000px); }
+    @media (max-width: 900px) {
+      .shell { width: min(100% - 28px, 1320px); }
       .topbar { height: 65px; }
       .top-note { max-width: 130px; text-align: right; font-size: 11px; }
-      main { padding: 52px 0 66px; }
-      .intro { margin-bottom: 25px; }
+      main { padding: 34px 0 46px; }
+      .intro { margin-bottom: 20px; }
       h1 { letter-spacing: -1.7px; }
       .intro-copy { font-size: 15px; }
+      .workspace { grid-template-columns: 1fr; gap: 14px; }
       .checker { padding: 17px; border-radius: 17px; }
       textarea { min-height: 150px; }
       .upload-row { align-items: flex-start; }
@@ -115,6 +130,9 @@
       .upload-icon { flex-basis: 34px; width: 34px; height: 34px; }
       .form-actions { align-items: stretch; flex-direction: column; }
       .submit-button { width: 100%; }
+      .results { min-height: 360px; max-height: 70vh; border-radius: 17px; }
+      .results-top { padding: 16px 17px; }
+      .result-placeholder { min-height: 270px; }
       .result-head { padding: 17px; }
       .result-head h2 { font-size: 21px; }
       .result-body { padding: 17px; }
@@ -145,7 +163,9 @@
       <p class="intro-copy">Search news coverage for a claim and open the original reports. Related articles are useful evidence to review, but they do not prove a claim on their own.</p>
     </section>
 
+    <div class="workspace">
     <section class="checker" aria-label="Submit a claim for news search">
+      <h2 class="panel-title">Your claim</h2>
       <label class="field-label" for="newsText">
         <span>What claim do you want to check?</span>
         <small>Text or screenshot</small>
@@ -187,6 +207,13 @@
     </section>
 
     <section class="results" id="results" aria-live="polite" aria-busy="false">
+      <div class="results-top"><h2>Evidence &amp; results</h2><span class="live-state" id="liveState">Ready when you are</span></div>
+      <div class="result-placeholder" id="resultPlaceholder">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4M8 11h6M11 8v6"/></svg>
+        <strong id="placeholderTitle">Your results will appear here</strong>
+        <p id="placeholderCopy">Enter a claim or add a screenshot on the left, then search current news coverage. This panel stays in view while the search runs.</p>
+      </div>
+      <div class="result-content" id="resultContent">
       <div class="result-head">
         <div>
           <p class="result-kicker">NewsAPI evidence review</p>
@@ -207,7 +234,9 @@
         </div>
         <div class="article-list" id="articleList"></div>
       </div>
+      </div>
     </section>
+    </div>
   </main>
 
   <footer class="site-footer">
@@ -268,11 +297,21 @@
     function showError(message) {
       errorMessage.textContent = message;
       errorMessage.style.display = 'block';
+      if (!resultsSection.classList.contains('has-results')) {
+        document.getElementById('liveState').textContent = 'Search needs attention';
+        document.getElementById('placeholderTitle').textContent = 'Could not complete the search';
+        document.getElementById('placeholderCopy').textContent = message;
+      }
     }
 
     function setLoading(isLoading) {
       analyzeButton.disabled = isLoading;
       resultsSection.setAttribute('aria-busy', String(isLoading));
+      document.getElementById('liveState').textContent = isLoading ? 'Searching news coverage…' : (resultsSection.classList.contains('has-results') ? 'Search complete' : 'Ready when you are');
+      if (isLoading && !resultsSection.classList.contains('has-results')) {
+        document.getElementById('placeholderTitle').textContent = 'Searching current coverage…';
+        document.getElementById('placeholderCopy').textContent = 'Checking NewsAPI for related reporting. Your results will appear here.';
+      }
       document.getElementById('spinner').style.display = isLoading ? 'block' : 'none';
       document.getElementById('searchIcon').style.display = isLoading ? 'none' : 'block';
       document.getElementById('buttonLabel').textContent = isLoading ? 'Searching NewsAPI…' : 'Search news coverage';
@@ -372,8 +411,10 @@
         list.appendChild(empty);
       }
 
-      resultsSection.style.display = 'block';
-      requestAnimationFrame(() => resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+      resultsSection.classList.add('has-results');
+      document.getElementById('resultPlaceholder').style.display = 'none';
+      document.getElementById('resultContent').style.display = 'block';
+      document.getElementById('liveState').textContent = 'Search complete';
     }
   </script>
 </body>

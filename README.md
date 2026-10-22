@@ -1,6 +1,6 @@
 # AI Fake News Detector
 
-A small Flask web application that classifies submitted news text with the included TF-IDF and Naive Bayes model. It can extract text from an uploaded image with Tesseract OCR and optionally search NewsAPI for related articles.
+A Flask application that requires NewsAPI to search for articles related to submitted text. It extracts text from uploaded images with Tesseract OCR and shows matching article links as evidence for the user to review. A saved TF-IDF/Naive Bayes model is shown only as a secondary estimate.
 
 ## Deploy to Render
 
@@ -8,10 +8,12 @@ This repository includes a Render Blueprint (`render.yaml`) and a Dockerfile. Do
 
 1. Push the project files to the GitHub repository. Keep `model.pkl`, `vectorizer.pkl`, `Dockerfile`, and `render.yaml` in the repository root.
 2. In Render, select **New → Blueprint**, connect the repository, and apply the Blueprint. Alternatively, create a **Web Service** from the repository and select **Docker** as the runtime.
-3. In the service's **Environment** settings, add `NEWSAPI_KEY` with a newly issued NewsAPI key. The key is optional; without it, text/image analysis works and the related-articles list is empty.
+3. In the service's **Environment** settings, add `NEWSAPI_KEY` with a valid NewsAPI key. This is required: without it (or if NewsAPI is unavailable), analysis returns an error instead of showing a model-only result.
 4. Deploy. Render checks `/health` and starts the site at the service URL.
 
 Do not put API keys in source code or commit them. If a key was previously committed, revoke it at its provider and create a replacement.
+
+**NewsAPI plan warning:** NewsAPI's free Developer plan is limited to development and testing and cannot be used for a production website. A live public deployment needs an eligible paid plan. Check NewsAPI's current [pricing and usage terms](https://newsapi.org/pricing) before putting the key on Render.
 
 ## Local run
 
@@ -22,10 +24,11 @@ python -m pip install -r requirements.txt
 gunicorn --bind 0.0.0.0:5000 app:app
 ```
 
-Open `http://localhost:5000`. Set `NEWSAPI_KEY` in the environment if related-article lookup is desired. On Windows, set `TESSERACT_CMD` to the full path of `tesseract.exe` if it is not on `PATH`.
+Open `http://localhost:5000`. Set `NEWSAPI_KEY` in the environment before using analysis. On Windows, set `TESSERACT_CMD` to the full path of `tesseract.exe` if it is not on `PATH`.
 
 ## Notes
 
 - The committed model files were serialized with scikit-learn 1.8.0; the dependency is pinned to that version for compatibility.
-- The confidence value is the model's class probability, not a fact-check guarantee. Check original sources before treating a result as true or false.
+- NewsAPI search is article discovery, not an automated fact-check. Headlines and descriptions may be incomplete or irrelevant; the app therefore reports an inconclusive evidence result and links to sources for manual review.
+- The optional model probability is not a fact-check guarantee. Check original sources before treating a claim as true or false.
 - `train.py` is an optional training script and expects `Fake.csv` and `True.csv`, which are not included in this repository. Training is not part of deployment.

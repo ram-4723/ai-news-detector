@@ -254,12 +254,12 @@ footer{padding:32px 24px;text-align:center;color:var(--muted);font-size:13px;bor
 
   <span class="badge glass animate-fade-in">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.8L20 10l-5 4 1.5 6L12 17l-4.5 3L9 14 4 10l6.1-1.2z"/></svg>
-    Powered by Machine Learning and NLP.
+    NewsAPI search required · ML estimate secondary
   </span>
 
   <h1 class="animate-fade-up">AI <span class="text-gradient">Fake News</span><br/> Detector</h1>
   <p class="animate-fade-up" style="animation-delay:120ms;">
-    Paste an article or headline, or upload a screenshot. The classifier estimates a label, and related news articles can be fetched when NewsAPI is configured.
+    Paste a news claim or upload a screenshot. NewsAPI search is required, and matching coverage is shown as evidence to review—not proof that a claim is true or false.
   </p>
 </section>
 
@@ -267,7 +267,7 @@ footer{padding:32px 24px;text-align:center;color:var(--muted);font-size:13px;bor
   <div class="detector-card glass-strong">
     <div id="scanLine" class="scan-line"></div>
 
-    <div class="live-tag"><span class="live-dot"></span>Live AI model · v4.2</div>
+    <div class="live-tag"><span class="live-dot"></span>NewsAPI evidence search · required</div>
 
     <textarea id="newsText" rows="6" placeholder="Paste a news headline, article, or claim to verify…"></textarea>
 
@@ -308,10 +308,10 @@ footer{padding:32px 24px;text-align:center;color:var(--muted);font-size:13px;bor
         </div>
       </div>
       <div class="loading-info">
-        <p>Cross-referencing trusted sources…</p>
+        <p>Searching NewsAPI for related coverage…</p>
         <div class="bar"><div></div></div>
         <div class="steps">
-          <span>Tokenizing</span><span>Semantic match</span><span>Source check</span><span>Stance detection</span>
+          <span>Searching reports</span><span>Reviewing headlines</span><span>Preparing evidence</span>
         </div>
       </div>
     </div>
@@ -326,21 +326,14 @@ footer{padding:32px 24px;text-align:center;color:var(--muted);font-size:13px;bor
             <svg id="verdictSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></svg>
           </div>
           <div>
-            <p class="verdict-label">Verdict</p>
-            <h3 id="verdictText" class="verdict-text"></h3>
+            <p class="verdict-label">NewsAPI evidence check</p>
+            <h3 id="verdictText" class="verdict-text">Inconclusive</h3>
           </div>
         </div>
         <div class="confidence">
-          <div class="ring">
-            <svg width="80" height="80">
-              <circle cx="40" cy="40" r="32" stroke="rgba(255,255,255,.10)" stroke-width="6" fill="none"/>
-              <circle id="ringProgress" cx="40" cy="40" r="32" stroke="var(--success)" stroke-width="6" fill="none" stroke-linecap="round" stroke-dasharray="201.06" stroke-dashoffset="201.06" style="transition:stroke-dashoffset 1s ease-out;filter:drop-shadow(0 0 6px currentColor);"/>
-            </svg>
-            <div id="ringPct" class="ring-pct">0%</div>
-          </div>
           <div>
-            <p>Confidence</p>
-            <p>Model probability</p>
+            <p id="articleCount">0 matching articles</p>
+            <p>NewsAPI search results</p>
           </div>
         </div>
       </div>
@@ -352,10 +345,10 @@ footer{padding:32px 24px;text-align:center;color:var(--muted);font-size:13px;bor
 <section id="sources" class="sources-section">
   <div class="sources-head">
     <div>
-      <p class="eyebrow">Trusted Sources</p>
+      <p class="eyebrow">Source examples</p>
       <h2>What this tool checks</h2>
     </div>
-    <p>These are example outlets to check yourself. They are not inputs to the classifier, and their names do not verify a result.</p>
+      <p>NewsAPI searches article titles and descriptions. Related results are evidence to review; they do not confirm or refute a claim by themselves.</p>
   </div>
   <div class="sources-grid">
     <!-- Generated server-side or static -->
@@ -366,7 +359,7 @@ footer{padding:32px 24px;text-align:center;color:var(--muted);font-size:13px;bor
 <section id="how" class="how-section">
   <div class="how-head">
     <p class="eyebrow">How it works</p>
-    <h2>Three steps to truth</h2>
+    <h2>How the evidence search works</h2>
   </div>
   <div class="how-grid">
     <div class="step glass-strong" style="animation-delay:0ms">
@@ -379,13 +372,13 @@ footer{padding:32px 24px;text-align:center;color:var(--muted);font-size:13px;bor
       <div class="step-num">02</div>
       <div class="step-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a4 4 0 0 0-4 4v1a4 4 0 0 0-4 4 4 4 0 0 0 1 2.6A4 4 0 0 0 8 20a4 4 0 0 0 4 2 4 4 0 0 0 4-2 4 4 0 0 0 3-6.4A4 4 0 0 0 16 7V6a4 4 0 0 0-4-4z"/></svg></div>
       <h3>Analyze</h3>
-      <p>The included text classifier compares language patterns with its training data.</p>
+      <p>The claim is searched against NewsAPI article headlines and descriptions.</p>
     </div>
     <div class="step glass-strong" style="animation-delay:200ms">
       <div class="step-num">03</div>
       <div class="step-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg></div>
       <h3>Verify</h3>
-      <p>Optionally search NewsAPI for related coverage to review yourself.</p>
+      <p>Review the linked reports. Related coverage alone cannot confirm a claim.</p>
     </div>
   </div>
 </section>
@@ -482,8 +475,11 @@ async function analyze() {
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'The analysis request failed.');
     renderResult({
-      verdict: data.prediction.includes('Real') ? 'real' : 'fake',
-      confidence: data.confidence,
+      factCheckStatus: data.fact_check_status,
+      evidenceSummary: data.evidence_summary,
+      totalResults: data.total_results,
+      classifierEstimate: data.classifier_estimate,
+      classifierProbability: data.classifier_probability,
       ocr: data.ocr_text,
       articles: data.articles || []
     });
@@ -501,25 +497,38 @@ async function analyze() {
 }
 
 function renderResult(result) {
-  const isReal = result.verdict === 'real';
   const card = document.getElementById('resultCard');
-  card.classList.remove('real', 'fake');
-  card.classList.add(isReal ? 'real' : 'fake');
   const icon = document.getElementById('verdictIcon');
   icon.classList.remove('real', 'fake');
-  icon.classList.add(isReal ? 'real' : 'fake');
-  document.getElementById('verdictSvg').innerHTML = isReal ? SHIELD_CHECK : SHIELD_ALERT;
-  document.getElementById('verdictText').textContent = isReal ? 'Likely Real' : 'Likely Fake';
-
-  const confidence = Math.max(0, Math.min(100, Number(result.confidence) || 0));
-  const circumference = 2 * Math.PI * 32;
-  const ring = document.getElementById('ringProgress');
-  ring.setAttribute('stroke', isReal ? 'var(--success)' : 'var(--destructive)');
-  ring.setAttribute('stroke-dashoffset', circumference - (confidence / 100) * circumference);
-  document.getElementById('ringPct').textContent = `${confidence}%`;
+  document.getElementById('verdictSvg').innerHTML = SHIELD_ALERT;
+  document.getElementById('verdictText').textContent = 'Inconclusive';
+  const count = Number(result.totalResults) || 0;
+  document.getElementById('articleCount').textContent = `${count} matching article${count === 1 ? '' : 's'}`;
 
   const signals = document.getElementById('signals');
   signals.replaceChildren();
+  const summary = document.createElement('div');
+  summary.className = 'signal';
+  const summaryLabel = document.createElement('span');
+  summaryLabel.className = 'signal-label';
+  summaryLabel.textContent = 'Evidence result';
+  const summaryText = document.createElement('p');
+  summaryText.textContent = result.evidenceSummary || 'NewsAPI did not return an evidence summary.';
+  summary.append(summaryLabel, summaryText);
+  signals.appendChild(summary);
+
+  if (result.classifierEstimate) {
+    const estimate = document.createElement('div');
+    estimate.className = 'signal';
+    const estimateLabel = document.createElement('span');
+    estimateLabel.className = 'signal-label';
+    estimateLabel.textContent = 'ML estimate (not a fact-check)';
+    const estimateText = document.createElement('p');
+    estimateText.textContent = `${result.classifierEstimate} · ${result.classifierProbability}% model probability`;
+    estimate.append(estimateLabel, estimateText);
+    signals.appendChild(estimate);
+  }
+
   if (result.ocr && result.ocr.trim()) {
     const box = document.createElement('div');
     box.className = 'signal';
@@ -540,7 +549,11 @@ function renderResult(result) {
     link.href = article.url;
     link.target = '_blank';
     link.rel = 'noopener noreferrer';
-    box.appendChild(link);
+    const source = document.createElement('p');
+    source.textContent = `${article.source || 'Unknown source'}${article.published_at ? ` · ${article.published_at}` : ''}`;
+    const description = document.createElement('p');
+    description.textContent = article.description || 'No article description provided by NewsAPI.';
+    box.append(link, source, description);
     signals.appendChild(box);
   });
   document.getElementById('result').style.display = 'block';

@@ -39,8 +39,14 @@ def load_artifact(filename):
         return pickle.load(artifact)
 
 
-model = load_artifact("model.pkl")
-vectorizer = load_artifact("vectorizer.pkl")
+try:
+    model = load_artifact("model.pkl")
+    vectorizer = load_artifact("vectorizer.pkl")
+except Exception:
+    # NewsAPI is the required primary check. The old classifier is only shown
+    # as a secondary estimate, so a missing/corrupt model must not disable it.
+    app.logger.exception("Optional classifier artifacts could not be loaded")
+    model = vectorizer = None
 
 
 @app.get("/")
@@ -80,28 +86,46 @@ def extract_image_text(image_value):
         raise RuntimeError("OCR is unavailable because Tesseract is not installed.") from exc
 
 
-def find_articles(query):
+class NewsAPIError(Exception):
+    """Raised when a mandatory NewsAPI search cannot be completed."""
+
+
+def search_newsapi(query):
     api_key = os.getenv("NEWSAPI_KEY", "").strip()
     if not api_key:
-        return []
+        raise NewsAPIError("NewsAPI is required but NEWSAPI_KEY is not configured on the server.")
 
     try:
         response = requests.get(
             NEWS_API_URL,
-            params={"q": query[:200], "pageSize": 5, "sortBy": "relevancy"},
+            params={"q": query[:500], "pageSize": 5, "sortBy": "relevancy"},
             headers={"X-Api-Key": api_key},
-            timeout=8,
+            timeout=15,
         )
         response.raise_for_status()
         payload = response.json()
-        return [
-            {"title": article.get("title") or "Untitled article", "url": article.get("url", "")}
+        if payload.get("status") != "ok":
+            code = payload.get("code", "unknown")
+            message = payload.get("message", "NewsAPI returned an error.")
+            raise NewsAPIError(f"NewsAPI error ({code}): {message}")
+
+        articles = [
+            {
+                "title": article.get("title") or "Untitled article",
+                "description": article.get("description") or "",
+                "source": (article.get("source") or {}).get("name") or "Unknown source",
+                "published_at": article.get("publishedAt") or "",
+                "url": article.get("url", ""),
+            }
             for article in payload.get("articles", [])[:5]
             if article.get("url", "").startswith(("https://", "http://"))
         ]
-    except (requests.RequestException, ValueError) as exc:
-        app.logger.warning("NewsAPI lookup failed: %s", exc)
-        return []
+        return int(payload.get("totalResults", len(articles))), articles
+    except NewsAPIError:
+        raise
+    except (requests.RequestException, ValueError, TypeError) as exc:
+        app.logger.warning("Required NewsAPI search failed: %s", exc)
+        raise NewsAPIError("NewsAPI could not be reached. Check the key, plan, and service logs.") from exc
 
 
 @app.post("/analyze")
@@ -130,20 +154,43 @@ def analyze():
         return jsonify({"error": "Enter at least five words, or upload an image with readable text."}), 422
 
     try:
-        transformed = vectorizer.transform([full_text])
-        prediction = int(model.predict(transformed)[0])
-        probabilities = model.predict_proba(transformed)[0]
-        confidence = round(float(max(probabilities)) * 100, 2)
-    except Exception:
-        app.logger.exception("Model prediction failed")
-        return jsonify({"error": "The analysis model could not process this content."}), 500
+        total_results, articles = search_newsapi(full_text)
+    except NewsAPIError as exc:
+        app.logger.error("NewsAPI is required for analysis: %s", exc)
+        status_code = 503 if "not configured" in str(exc) else 502
+        return jsonify({"error": str(exc)}), status_code
 
-    result = "Likely Real" if prediction == 1 else "Likely Fake"
+    classifier_estimate = None
+    classifier_probability = None
+    if model is not None and vectorizer is not None:
+        try:
+            transformed = vectorizer.transform([full_text])
+            prediction = int(model.predict(transformed)[0])
+            probabilities = model.predict_proba(transformed)[0]
+            classifier_estimate = "Likely Real" if prediction == 1 else "Likely Fake"
+            classifier_probability = round(float(max(probabilities)) * 100, 2)
+        except Exception:
+            app.logger.exception("Secondary classifier estimate failed")
+
+    # NewsAPI returns article-search results, not a fact-check verdict. Stay
+    # inconclusive and show sources for manual comparison instead of claiming
+    # that a matching headline proves or disproves the submitted claim.
+    if total_results:
+        evidence_summary = (
+            f"NewsAPI found {total_results} related article(s). This is not enough by itself "
+            "to confirm or refute the claim; review the sources below."
+        )
+    else:
+        evidence_summary = "NewsAPI found no matching articles. This does not prove the claim is false."
+
     return jsonify(
         {
-            "prediction": result,
-            "confidence": confidence,
-            "articles": find_articles(full_text),
+            "fact_check_status": "inconclusive",
+            "evidence_summary": evidence_summary,
+            "total_results": total_results,
+            "articles": articles,
+            "classifier_estimate": classifier_estimate,
+            "classifier_probability": classifier_probability,
             "ocr_text": extracted_text,
         }
     )

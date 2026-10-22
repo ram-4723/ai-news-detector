@@ -141,6 +141,55 @@
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
     }
+    /* Restrained AWS-inspired palette: navy structure, warm surfaces, amber actions. */
+    :root {
+      --ink: #172b4d;
+      --muted: #5c6b7a;
+      --paper: #f4f6f8;
+      --surface: #ffffff;
+      --line: #d8e0e8;
+      --green: #1769aa;
+      --green-dark: #0f4f86;
+      --mint: #eaf3fa;
+      --lime: #ffb81c;
+      --shadow: 0 12px 34px rgba(18, 42, 66, .09);
+    }
+    body { background: linear-gradient(180deg, #eef2f6 0, #f7f8fa 360px, #f4f6f8 100%); }
+    .topbar { height: 72px; color: #fff; background: #172b4d; border-bottom: 3px solid #ffb81c; }
+    .brand, .brand-name { color: #fff; }
+    .brand-name span { color: #ffb81c; }
+    .brand-mark { color: #172b4d; background: #ffb81c; border-radius: 10px; }
+    .top-note { color: #d6e0ea; font-size: 12px; letter-spacing: .03em; }
+    main { padding-top: 42px; }
+    .eyebrow { color: #9a5b00; padding: 7px 11px; border: 1px solid #f0d49b; border-radius: 999px; background: #fff8e7; letter-spacing: .08em; }
+    .eyebrow-dot { background: #e99b00; box-shadow: 0 0 0 3px rgba(233,155,0,.14); }
+    h1 { color: #172b4d; }
+    .intro-copy { color: #5c6b7a; }
+    .workspace { gap: 20px; }
+    .checker, .results { border-color: #d8e0e8; border-radius: 16px; box-shadow: 0 12px 34px rgba(18,42,66,.08); }
+    .checker { padding: 26px; }
+    .panel-title, .results-top h2 { color: #172b4d; }
+    .field-label { color: #223b5a; }
+    textarea { border-color: #cbd5df; border-radius: 10px; background: #fbfcfd; }
+    textarea:focus { border-color: #e99b00; box-shadow: 0 0 0 3px rgba(233,155,0,.17); }
+    .upload-row { border: 1px dashed #d2a84f; border-radius: 10px; background: #fffaf0; }
+    .upload-icon { color: #885200; background: #ffefc2; }
+    .file-button, .remove-button, .ocr-details summary { color: #1769aa; }
+    .submit-button { min-height: 50px; border-radius: 9px; color: #172b4d; background: #ffb81c; box-shadow: 0 2px 0 #d99600; }
+    .submit-button:hover:not(:disabled) { color: #172b4d; background: #ffc947; }
+    .submit-button:disabled { color: #40536d; background: #f3d384; }
+    .results-top { padding: 19px 22px; background: #fff; }
+    .live-state { padding: 7px 10px; border-radius: 999px; background: #f0f3f6; font-weight: 600; }
+    .result-placeholder svg { color: #9aaaba; }
+    .result-head { background: #f2f6fa; }
+    .result-kicker, .article-source { color: #1769aa; }
+    .result-count { color: #172b4d; border-color: #d5e0e9; background: #fff; }
+    .article { border-radius: 10px; border-color: #dce3ea; }
+    .article:hover { border-color: #e2a415; box-shadow: 0 5px 16px rgba(18,42,66,.07); }
+    .article-title:hover { color: #1769aa; }
+    .empty-results { background: #f8fafc; }
+    .site-footer { border-color: #d8e0e8; }
+    .site-footer strong { color: #172b4d; }
   </style>
 </head>
 <body>

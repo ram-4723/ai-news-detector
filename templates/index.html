@@ -3,468 +3,148 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#f6f7f3" />
-  <meta name="description" content="Search current news coverage for a claim and review the original article sources." />
-  <title>Rekkod AI — News Evidence Checker</title>
+  <meta name="theme-color" content="#10152a" />
+  <meta name="description" content="Search current news coverage for a claim and review original article sources with a separate optional machine-learning estimate." />
+  <title>Fake News Detection — NLP Powered System</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet" />
-  <style>
-    :root {
-      color-scheme: light;
-      --ink: #172a28;
-      --muted: #63716d;
-      --paper: #f6f7f3;
-      --surface: #fff;
-      --line: #e2e8e2;
-      --green: #176c58;
-      --green-dark: #105341;
-      --mint: #e6f4ec;
-      --lime: #d9f26a;
-      --coral: #bd4b39;
-      --shadow: 0 18px 60px rgba(27, 52, 43, .08);
-      font-family: "DM Sans", sans-serif;
-    }
-    * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
-    body { margin: 0; min-width: 320px; color: var(--ink); background: var(--paper); }
-    button, textarea { font: inherit; }
-    button, a { -webkit-tap-highlight-color: transparent; }
-    a { color: inherit; }
-    .shell { width: min(100% - 40px, 1320px); margin-inline: auto; }
-    .topbar { height: 76px; display: flex; align-items: center; border-bottom: 1px solid var(--line); }
-    .topbar-inner { display: flex; align-items: center; justify-content: space-between; }
-    .brand { display: inline-flex; align-items: center; gap: 11px; color: var(--ink); text-decoration: none; }
-    .brand-mark { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 12px; color: var(--lime); background: var(--green); }
-    .brand-mark svg { width: 21px; height: 21px; }
-    .brand-name { font: 800 20px/1 "Manrope", sans-serif; letter-spacing: -.8px; }
-    .brand-name span { color: var(--green); }
-    .top-note { color: var(--muted); font-size: 13px; }
-    main { padding: 38px 0 52px; }
-    .intro { max-width: 800px; margin: 0 0 28px; }
-    .eyebrow { display: inline-flex; align-items: center; gap: 8px; color: var(--green); font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
-    .eyebrow-dot { width: 7px; height: 7px; border-radius: 50%; background: #78a923; }
-    h1, h2, h3, p { margin-top: 0; }
-    h1 { margin: 12px 0 8px; font: 800 clamp(32px, 4vw, 46px)/1.08 "Manrope", sans-serif; letter-spacing: -2px; }
-    .intro-copy { max-width: 700px; margin: 0; color: var(--muted); font-size: 15px; line-height: 1.6; }
-    .workspace { display: grid; grid-template-columns: minmax(340px, .88fr) minmax(0, 1.12fr); align-items: start; gap: 22px; }
-    .checker { min-width: 0; padding: 24px; border: 1px solid var(--line); border-radius: 22px; background: var(--surface); box-shadow: var(--shadow); }
-    .panel-title { margin: 0 0 18px; font: 800 18px "Manrope", sans-serif; letter-spacing: -.4px; }
-    .field-label { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; font-size: 14px; font-weight: 700; }
-    .field-label small { color: var(--muted); font-size: 12px; font-weight: 500; }
-    textarea { display: block; width: 100%; min-height: 185px; resize: vertical; padding: 17px; border: 1px solid var(--line); border-radius: 14px; outline: 0; color: var(--ink); background: #fbfcfa; font-size: 15px; line-height: 1.6; transition: border-color .2s, box-shadow .2s; }
-    textarea::placeholder { color: #89948e; }
-    textarea:focus { border-color: #64a58a; box-shadow: 0 0 0 4px rgba(23,108,88,.1); }
-    .under-field { display: flex; justify-content: space-between; gap: 12px; margin-top: 8px; color: var(--muted); font-size: 12px; }
-    .upload-row { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-top: 19px; padding: 15px; border: 1px dashed #c8d5ca; border-radius: 13px; background: #fbfcfa; }
-    .upload-copy { display: flex; align-items: center; gap: 12px; min-width: 0; }
-    .upload-icon { display: grid; place-items: center; flex: 0 0 38px; width: 38px; height: 38px; border-radius: 11px; color: var(--green); background: var(--mint); }
-    .upload-icon svg { width: 19px; height: 19px; }
-    .upload-title { margin: 0 0 3px; font-size: 13px; font-weight: 700; }
-    .upload-subtitle { margin: 0; color: var(--muted); font-size: 12px; }
-    .file-button, .remove-button { border: 0; background: transparent; color: var(--green); font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; }
-    .file-button:hover, .remove-button:hover { color: var(--green-dark); text-decoration: underline; }
-    #fileInput { display: none; }
-    .preview { display: none; align-items: center; gap: 12px; margin-top: 12px; padding: 10px; border: 1px solid var(--line); border-radius: 12px; }
-    .preview img { display: block; width: 52px; height: 52px; border-radius: 8px; object-fit: cover; }
-    .preview-name { flex: 1; min-width: 0; overflow: hidden; color: var(--muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
-    .form-actions { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 20px; }
-    .privacy-note { max-width: 390px; margin: 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
-    .submit-button { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 48px; padding: 0 20px; border: 0; border-radius: 12px; color: #fff; background: var(--green); font-size: 14px; font-weight: 700; cursor: pointer; transition: background .2s, transform .2s; }
-    .submit-button:hover:not(:disabled) { background: var(--green-dark); transform: translateY(-1px); }
-    .submit-button:disabled { opacity: .65; cursor: wait; }
-    .submit-button svg { width: 17px; height: 17px; }
-    .spinner { display: none; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%; animation: spin .8s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .error { display: none; margin: 15px 0 0; padding: 12px 14px; border: 1px solid #f2c4bd; border-radius: 10px; color: #8f3023; background: #fff2ef; font-size: 13px; line-height: 1.5; }
-    .results { display: flex; flex-direction: column; min-width: 0; min-height: 540px; max-height: min(760px, calc(100vh - 210px)); overflow: hidden; border: 1px solid var(--line); border-radius: 22px; background: var(--surface); box-shadow: var(--shadow); }
-    .results-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 20px 22px; border-bottom: 1px solid var(--line); }
-    .results-top h2 { margin: 0; font: 800 18px "Manrope", sans-serif; letter-spacing: -.4px; }
-    .live-state { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); font-size: 12px; }
-    .live-state::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #a8b3ae; }
-    .results[aria-busy="true"] .live-state::before { background: #d88a25; animation: pulse 1s infinite; }
-    .results.has-results .live-state::before { background: #4d9e70; }
-    @keyframes pulse { 50% { opacity: .35; } }
-    .result-placeholder { display: grid; flex: 1; place-content: center; justify-items: center; gap: 12px; padding: 36px; color: var(--muted); text-align: center; }
-    .result-placeholder svg { width: 42px; height: 42px; color: #8aa397; }
-    .result-placeholder strong { color: var(--ink); font: 700 17px "Manrope", sans-serif; }
-    .result-placeholder p { max-width: 340px; margin: 0; font-size: 13px; line-height: 1.6; }
-    .result-content { display: none; flex: 1; min-height: 0; overflow: auto; }
-    .result-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; padding: 22px 24px; border-bottom: 1px solid #d9e6dc; background: #eef6ef; }
-    .result-kicker { margin-bottom: 6px; color: var(--green); font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
-    .result-head h2 { margin: 0; font: 800 24px/1.2 "Manrope", sans-serif; letter-spacing: -.7px; }
-    .result-count { flex: 0 0 auto; padding: 8px 11px; border: 1px solid #d2e2d6; border-radius: 999px; color: var(--green-dark); background: #fff; font-size: 12px; font-weight: 700; }
-    .result-body { padding: 21px 24px; background: #fff; }
-    .result-summary { margin: 0; color: #40534d; font-size: 14px; line-height: 1.65; }
-    .secondary-estimate { display: none; margin-top: 15px; padding: 11px 13px; border-radius: 10px; color: #53635d; background: #f4f6f3; font-size: 12px; line-height: 1.5; }
-    .secondary-estimate strong { color: var(--ink); }
-    .ocr-details { display: none; margin-top: 17px; padding-top: 16px; border-top: 1px solid var(--line); }
-    .ocr-details summary { color: var(--green); font-size: 13px; font-weight: 700; cursor: pointer; }
-    .ocr-details p { margin: 10px 0 0; color: var(--muted); font-size: 13px; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
-    .articles-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 28px 0 12px; }
-    .articles-heading h3 { margin: 0; font: 800 18px "Manrope", sans-serif; letter-spacing: -.3px; }
-    .articles-heading span { color: var(--muted); font-size: 12px; }
-    .article-list { display: grid; gap: 11px; }
-    .article { padding: 17px 18px; border: 1px solid var(--line); border-radius: 13px; background: #fff; transition: border-color .2s, transform .2s; }
-    .article:hover { border-color: #abcbb8; transform: translateY(-1px); }
-    .article-source { margin: 0 0 6px; color: var(--green); font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
-    .article-title { display: inline-block; color: var(--ink); font: 700 16px/1.4 "Manrope", sans-serif; text-decoration: none; }
-    .article-title:hover { color: var(--green); text-decoration: underline; text-underline-offset: 3px; }
-    .article-description { margin: 8px 0 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
-    .empty-results { padding: 22px; border: 1px solid var(--line); border-radius: 13px; color: var(--muted); background: #fff; font-size: 13px; line-height: 1.6; }
-    .site-footer { padding: 20px 0 28px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; text-align: center; }
-    .site-footer strong { color: var(--ink); }
-    @media (max-width: 900px) {
-      .shell { width: min(100% - 28px, 1320px); }
-      .topbar { height: 65px; }
-      .top-note { max-width: 130px; text-align: right; font-size: 11px; }
-      main { padding: 34px 0 46px; }
-      .intro { margin-bottom: 20px; }
-      h1 { letter-spacing: -1.7px; }
-      .intro-copy { font-size: 15px; }
-      .workspace { grid-template-columns: 1fr; gap: 14px; }
-      .checker { padding: 17px; border-radius: 17px; }
-      textarea { min-height: 150px; }
-      .upload-row { align-items: flex-start; }
-      .upload-copy { align-items: flex-start; }
-      .upload-icon { flex-basis: 34px; width: 34px; height: 34px; }
-      .form-actions { align-items: stretch; flex-direction: column; }
-      .submit-button { width: 100%; }
-      .results { min-height: 360px; max-height: 70vh; border-radius: 17px; }
-      .results-top { padding: 16px 17px; }
-      .result-placeholder { min-height: 270px; }
-      .result-head { padding: 17px; }
-      .result-head h2 { font-size: 21px; }
-      .result-body { padding: 17px; }
-      .result-count { max-width: 115px; white-space: normal; text-align: center; }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
-    }
-    /* Restrained AWS-inspired palette: navy structure, warm surfaces, amber actions. */
-    :root {
-      --ink: #172b4d;
-      --muted: #5c6b7a;
-      --paper: #f4f6f8;
-      --surface: #ffffff;
-      --line: #d8e0e8;
-      --green: #1769aa;
-      --green-dark: #0f4f86;
-      --mint: #eaf3fa;
-      --lime: #ffb81c;
-      --shadow: 0 12px 34px rgba(18, 42, 66, .09);
-    }
-    body { background: linear-gradient(180deg, #eef2f6 0, #f7f8fa 360px, #f4f6f8 100%); }
-    .topbar { height: 72px; color: #fff; background: #172b4d; border-bottom: 3px solid #ffb81c; }
-    .brand, .brand-name { color: #fff; }
-    .brand-name span { color: #ffb81c; }
-    .brand-mark { color: #172b4d; background: #ffb81c; border-radius: 10px; }
-    .top-note { color: #d6e0ea; font-size: 12px; letter-spacing: .03em; }
-    main { padding-top: 42px; }
-    .eyebrow { color: #9a5b00; padding: 7px 11px; border: 1px solid #f0d49b; border-radius: 999px; background: #fff8e7; letter-spacing: .08em; }
-    .eyebrow-dot { background: #e99b00; box-shadow: 0 0 0 3px rgba(233,155,0,.14); }
-    h1 { color: #172b4d; }
-    .intro-copy { color: #5c6b7a; }
-    .workspace { gap: 20px; }
-    .checker, .results { border-color: #d8e0e8; border-radius: 16px; box-shadow: 0 12px 34px rgba(18,42,66,.08); }
-    .checker { padding: 26px; }
-    .panel-title, .results-top h2 { color: #172b4d; }
-    .field-label { color: #223b5a; }
-    textarea { border-color: #cbd5df; border-radius: 10px; background: #fbfcfd; }
-    textarea:focus { border-color: #e99b00; box-shadow: 0 0 0 3px rgba(233,155,0,.17); }
-    .upload-row { border: 1px dashed #d2a84f; border-radius: 10px; background: #fffaf0; }
-    .upload-icon { color: #885200; background: #ffefc2; }
-    .file-button, .remove-button, .ocr-details summary { color: #1769aa; }
-    .submit-button { min-height: 50px; border-radius: 9px; color: #172b4d; background: #ffb81c; box-shadow: 0 2px 0 #d99600; }
-    .submit-button:hover:not(:disabled) { color: #172b4d; background: #ffc947; }
-    .submit-button:disabled { color: #40536d; background: #f3d384; }
-    .results-top { padding: 19px 22px; background: #fff; }
-    .live-state { padding: 7px 10px; border-radius: 999px; background: #f0f3f6; font-weight: 600; }
-    .result-placeholder svg { color: #9aaaba; }
-    .result-head { background: #f2f6fa; }
-    .result-kicker, .article-source { color: #1769aa; }
-    .result-count { color: #172b4d; border-color: #d5e0e9; background: #fff; }
-    .article { border-radius: 10px; border-color: #dce3ea; }
-    .article:hover { border-color: #e2a415; box-shadow: 0 5px 16px rgba(18,42,66,.07); }
-    .article-title:hover { color: #1769aa; }
-    .empty-results { background: #f8fafc; }
-    .site-footer { border-color: #d8e0e8; }
-    .site-footer strong { color: #172b4d; }
-  </style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='neon-dashboard.css') }}" />
 </head>
 <body>
+  <svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10h-6v-7H9v7H3z"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="7.2"/><path d="m16.3 16.3 4.5 4.5"/></symbol>
+    <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 11v7c0 1.7 3.6 3 8 3s8-1.3 8-3v-7"/></symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5zM3 12l9 5 9-5M3 16l9 5 9-5"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 19V9m5 10V5m5 14v-7m5 7V3"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></symbol>
+    <symbol id="i-doc" viewBox="0 0 24 24"><path d="M6 3h9l5 5v13H6z"/><path d="M14 3v6h6M9 13h8M9 17h6"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a8 8 0 0 0 0-6l1.5-1.1-1.5-2.6-1.8.7a8 8 0 0 0-5.2-1.5L12 2H9l-.4 2.5a8 8 0 0 0-2.3 1.3l-2.2-.7-1.5 2.6L4.3 9a8 8 0 0 0 0 6l-1.7 1.1 1.5 2.6 2.2-.7a8 8 0 0 0 2.3 1.3L9 22h3l.4-2.5a8 8 0 0 0 5.2-1.5l1.8.7 1.5-2.6z"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16zM13.5 6.5l4 4M3 22h18"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.1 0l3-3A5 5 0 0 0 13 2.9l-1.7 1.7M14 11a5 5 0 0 0-7.1 0l-3 3A5 5 0 0 0 11 21.1l1.7-1.7"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V4m-5 5 5-5 5 5M4 15v5h16v-5"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="i-warning" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m7 10 5 5 5-5"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></symbol>
+    <symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.7 10.7 6.6-4.4m-6.6 9.4 6.6 2.6"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 20h16"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.9-3L3 11m0-6v6h6M4 13a8 8 0 0 0 14.9 3L21 13m0 6v-6h-6"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9" r="1.5"/><path d="m21 15-5-5L5 20"/></symbol>
+    <symbol id="i-paper" viewBox="0 0 24 24"><path d="M6 3h9l5 5v13H6zM14 3v6h6M9 13h8M9 17h6"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11z"/><path d="m8.5 12 2.3 2.3 4.8-5"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><path d="m13 2-3 8h7L9 22l2-9H5z"/></symbol>
+  </svg>
   <header class="topbar">
-    <div class="shell topbar-inner">
-      <a class="brand" href="/" aria-label="Rekkod AI home">
-        <span class="brand-mark" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 20 6v5c0 5-3.3 8.2-8 10-4.7-1.8-8-5-8-10V6l8-3Z"/><path d="m8.5 12 2.2 2.2 4.8-5"/></svg>
-        </span>
-        <span class="brand-name">Rekkod <span>AI</span></span>
-      </a>
-      <span class="top-note">News evidence checker</span>
+    <a class="brand" href="#dashboard" aria-label="Fake News Detection dashboard">
+      <span class="brand-mark" aria-hidden="true"><svg class="icon"><use href="#i-shield"/></svg></span>
+      <span><span class="brand-title">FakeNews<span class="brand-accent">Detect</span></span><span class="brand-subtitle">NLP Powered · News Verification</span></span>
+    </a>
+    <nav class="top-nav" aria-label="Primary navigation">
+      <a class="active" href="#dashboard"><svg class="icon"><use href="#i-home"/></svg><span>Home</span></a>
+      <a href="#analyze"><svg class="icon"><use href="#i-search"/></svg><span>Analyze</span></a>
+      <a href="#recent-analyses"><svg class="icon"><use href="#i-db"/></svg><span>Datasets</span></a>
+      <a href="#model-insights"><svg class="icon"><use href="#i-settings"/></svg><span>Model</span></a>
+      <a href="#result-card"><svg class="icon"><use href="#i-doc"/></svg><span>Reports</span></a>
+      <a href="#about"><svg class="icon"><use href="#i-info"/></svg><span>About</span></a>
+    </nav>
+    <div class="top-actions">
+      <button class="icon-button notification-button" id="notificationButton" type="button" aria-label="Notifications" title="Notifications"><svg class="icon"><use href="#i-bell"/></svg><i></i></button>
+      <button class="icon-button" id="themeToggle" type="button" aria-label="Toggle color theme" title="Toggle color theme"><svg class="icon"><use href="#i-sun"/></svg></button>
+      <span class="top-divider"></span>
+      <button class="profile-button" type="button" title="Profile"><span class="profile-avatar"><svg class="icon"><use href="#i-user"/></svg></span><span>Ramachandran Yadav</span><svg class="icon"><use href="#i-chevron"/></svg></button>
     </div>
   </header>
-
-  <main class="shell">
-    <section class="intro" aria-labelledby="page-title">
-      <span class="eyebrow"><span class="eyebrow-dot"></span>Evidence-first review</span>
-      <h1 id="page-title">Check a claim.<br />See the coverage.</h1>
-      <p class="intro-copy">Search news coverage for a claim and open the original reports. Related articles are useful evidence to review, but they do not prove a claim on their own.</p>
-    </section>
-
-    <div class="workspace">
-    <section class="checker" aria-label="Submit a claim for news search">
-      <h2 class="panel-title">Your claim</h2>
-      <label class="field-label" for="newsText">
-        <span>What claim do you want to check?</span>
-        <small>Text or screenshot</small>
-      </label>
-      <textarea id="newsText" maxlength="20000" placeholder="Paste the specific statement or news claim here…" aria-describedby="inputHelp"></textarea>
-      <div class="under-field" id="inputHelp">
-        <span>Use the exact claim when possible for more relevant search results.</span>
-        <span id="charCount">0 / 20,000</span>
-      </div>
-
-      <div class="upload-row">
-        <div class="upload-copy">
-          <span class="upload-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9" r="1.5"/><path d="m21 15-5-5L5 20"/><path d="M12 2v5m-2.5-2.5L12 2l2.5 2.5"/></svg>
-          </span>
-          <div>
-            <p class="upload-title">Add a screenshot (optional)</p>
-            <p class="upload-subtitle">JPG, PNG, or WebP · up to 5 MB</p>
-          </div>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <nav class="side-nav" aria-label="Dashboard navigation">
+        <a class="side-link active" href="#analyze"><svg class="icon"><use href="#i-home"/></svg>Analyze News</a>
+        <a class="side-link" href="#analyze" title="This checker currently analyzes one claim at a time"><svg class="icon"><use href="#i-layers"/></svg>Batch Analysis</a>
+        <a class="side-link" href="#dataset-overview"><svg class="icon"><use href="#i-db"/></svg>Datasets</a>
+        <a class="side-link" href="#model-insights"><svg class="icon"><use href="#i-settings"/></svg>Model &amp; Training</a>
+        <a class="side-link" href="#result-card"><svg class="icon"><use href="#i-chart"/></svg>Reports</a>
+        <a class="side-link" href="#recent-analyses"><svg class="icon"><use href="#i-clock"/></svg>History</a>
+        <a class="side-link" href="#saved-results"><svg class="icon"><use href="#i-bookmark"/></svg>Saved Results</a>
+      </nav>
+      <div class="side-promo"><div class="promo-heading"><svg class="icon"><use href="#i-bolt"/></svg><span>AI-Powered<br/>News Verification</span></div><p>Review news claims against current coverage and an optional machine-learning estimate.</p><div class="promo-wave" aria-hidden="true"></div></div>
+    </aside>
+    <div class="page-content">
+      <section class="hero" id="dashboard" aria-labelledby="page-title">
+        <div class="hero-copy"><h1 id="page-title">Fake News <span>Detection System</span></h1><p>Review the authenticity of news articles using NLP and machine learning. Compare claims with current reporting and inspect the original sources.</p><div class="hero-tags"><span><i><svg class="icon"><use href="#i-bolt"/></svg></i><b>Fast &amp; Evidence-led<small>Current coverage search</small></b></span><span><i><svg class="icon"><use href="#i-layers"/></svg></i><b>Multi-Input<small>Text, URL, or image</small></b></span><span><i><svg class="icon"><use href="#i-shield"/></svg></i><b>Clear Results<small>Sources and model estimate</small></b></span></div></div>
+        <svg class="hero-art" viewBox="0 0 550 220" role="img" aria-label="Real and fake news articles being reviewed">
+          <defs><linearGradient id="paperGreen" x2="1"><stop stop-color="#d5fff0"/><stop offset="1" stop-color="#a7f0d8"/></linearGradient><linearGradient id="paperRed" x2="1"><stop stop-color="#ffe6eb"/><stop offset="1" stop-color="#f6b9d6"/></linearGradient><linearGradient id="glass"><stop stop-color="#56caff" stop-opacity=".5"/><stop offset="1" stop-color="#835eff" stop-opacity=".45"/></linearGradient><filter id="shadow"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#03061c" flood-opacity=".55"/></filter></defs>
+          <g filter="url(#shadow)" transform="rotate(-8 185 105)"><rect x="62" y="25" width="190" height="150" rx="9" fill="url(#paperGreen)"/><rect x="72" y="35" width="170" height="24" rx="4" fill="#f2fff9"/><text x="82" y="53" fill="#102a36" font-family="Arial" font-weight="800" font-size="17">REAL NEWS</text><circle cx="224" cy="47" r="10" fill="#24a568"/><path d="m219 47 4 4 7-8" fill="none" stroke="white" stroke-width="2.5"/><rect x="75" y="70" width="76" height="43" rx="4" fill="#526d94"/><rect x="158" y="70" width="77" height="8" rx="3" fill="#64718f"/><rect x="158" y="84" width="68" height="5" rx="2" fill="#8794ad"/><rect x="158" y="94" width="73" height="5" rx="2" fill="#8794ad"/><rect x="75" y="121" width="160" height="5" rx="2" fill="#8694a8"/><rect x="75" y="132" width="146" height="5" rx="2" fill="#a2adbd"/><rect x="75" y="143" width="154" height="5" rx="2" fill="#a2adbd"/></g>
+          <g filter="url(#shadow)" transform="rotate(6 374 107)"><rect x="276" y="40" width="204" height="145" rx="9" fill="#a58bff"/><rect x="286" y="30" width="196" height="145" rx="9" fill="url(#paperRed)"/><rect x="296" y="40" width="176" height="24" rx="4" fill="#fff8fc"/><text x="305" y="58" fill="#47162b" font-family="Arial" font-weight="800" font-size="16">FAKE NEWS</text><circle cx="454" cy="52" r="10" fill="#dc3a4b"/><path d="m450 48 8 8m0-8-8 8" fill="none" stroke="white" stroke-width="2.5"/><rect x="299" y="74" width="76" height="40" rx="4" fill="#606281"/><rect x="382" y="74" width="80" height="7" rx="3" fill="#756f8c"/><rect x="382" y="87" width="69" height="5" rx="2" fill="#a3a0b4"/><rect x="382" y="98" width="74" height="5" rx="2" fill="#a3a0b4"/><rect x="299" y="123" width="159" height="5" rx="2" fill="#9792a8"/><rect x="299" y="134" width="150" height="5" rx="2" fill="#ada8ba"/></g>
+          <circle cx="285" cy="113" r="48" fill="url(#glass)" stroke="#766cff" stroke-width="6"/><circle cx="285" cy="113" r="40" fill="#17286344" stroke="#d0d5ff" stroke-opacity=".6" stroke-width="2"/><path d="m319 149 54 57" stroke="#8589ff" stroke-width="18" stroke-linecap="round"/><path d="m322 151 49 52" stroke="#171a4e" stroke-width="9" stroke-linecap="round"/><path d="M15 191c73-51 113-5 191-39s111-89 193-41 99 50 146-6M4 208c88-45 123 5 216-28s110-77 187-33 96 45 145-8" fill="none" stroke="#31cbee" stroke-opacity=".55" stroke-width="2"/>
+        </svg>
+      </section>
+      <main class="dashboard-area"><div class="dashboard-grid">
+        <div class="main-column">
+          <section class="card analyzer-card" id="analyze" aria-label="Analyze news claim">
+            <div class="card-heading"><span class="heading-icon"><svg class="icon"><use href="#i-doc"/></svg></span><div><h2>Analyze News</h2><p>Enter a claim, search terms, or a screenshot to review related news coverage.</p></div></div>
+            <div class="analyzer-form">
+              <div class="mode-tabs" role="tablist" aria-label="Analysis input type">
+                <button class="mode-tab active" type="button" role="tab" aria-selected="true" aria-controls="textPanel" data-mode="text"><svg class="icon"><use href="#i-edit"/></svg>Text Input</button>
+                <button class="mode-tab" type="button" role="tab" aria-selected="false" aria-controls="urlPanel" data-mode="url"><svg class="icon"><use href="#i-link"/></svg>URL Analysis</button>
+                <button class="mode-tab" type="button" role="tab" aria-selected="false" aria-controls="imagePanel" data-mode="image"><svg class="icon"><use href="#i-upload"/></svg>Upload File</button>
+              </div>
+              <div class="mode-panel input-panel" id="textPanel" role="tabpanel"><label class="sr-only" for="newsText">News claim or headline</label><textarea id="newsText" maxlength="20000" placeholder="Paste the news article, headline, or claim you want to check…" aria-describedby="inputHelp"></textarea><div class="input-help" id="inputHelp"><span>Use a specific claim or headline for relevant coverage.</span><span id="charCount">0 / 20,000</span></div></div>
+              <div class="mode-panel input-panel" id="urlPanel" role="tabpanel" hidden><label class="sr-only" for="urlText">News article URL</label><input id="urlText" type="url" placeholder="https://example.com/news/article-title" autocomplete="url"/><label class="sr-only" for="urlKeywords">Headline or extra search terms</label><input id="urlKeywords" type="text" placeholder="Optional: add the headline or key terms" style="margin-top:9px"/><p class="mode-explainer">The page itself is not downloaded. Words from the URL and headline are used to search for related coverage.</p></div>
+              <div class="mode-panel input-panel" id="imagePanel" role="tabpanel" hidden><div class="dropzone"><div class="drop-copy"><span class="drop-icon"><svg class="icon"><use href="#i-image"/></svg></span><div><p class="drop-title">Upload a news screenshot</p><p class="drop-subtitle">JPG, PNG, or WebP · up to 5 MB · OCR text is searched</p></div></div><input id="fileInput" type="file" accept="image/png,image/jpeg,image/webp"/><button class="file-button" id="chooseImage" type="button">Choose file</button></div><div class="preview" id="preview"><img id="previewImg" alt="Selected screenshot preview"/><span class="preview-name" id="previewName"></span><button class="remove-button" id="removeImage" type="button">Remove</button></div><label class="sr-only" for="newsTextImage">Optional claim text</label><textarea id="newsTextImage" maxlength="20000" placeholder="Optional: add a claim or headline to search with the screenshot…" style="min-height:68px;margin-top:10px"></textarea></div>
+              <div class="form-bottom"><label class="model-control" for="modelSelect">Model<select id="modelSelect"><option>NewsAPI + TF-IDF / Naive Bayes estimate</option></select></label><div class="form-controls"><button class="clear-button" id="clearForm" type="button"><svg class="icon"><use href="#i-refresh"/></svg>Clear</button><button class="submit-button" id="analyzeBtn" type="button"><span class="spinner" id="spinner" aria-hidden="true"></span><svg class="icon" id="searchIcon"><use href="#i-search"/></svg><span id="buttonLabel">Analyze News</span></button></div></div>
+              <p class="error" id="errorMessage" role="alert"></p>
+            </div>
+          </section>
+          <section class="card result-card" id="result-card" aria-live="polite" aria-busy="false">
+            <div class="result-card-heading"><span class="heading-icon"><svg class="icon"><use href="#i-check"/></svg></span><div><h2>Result</h2><p>Evidence summary, related reporting, and a separate model estimate.</p></div><span class="result-status" id="resultStatus">Ready</span></div>
+            <div class="result-empty" id="resultEmpty"><svg class="icon"><use href="#i-search"/></svg><div><strong id="placeholderTitle">Ready to review a claim</strong><p id="placeholderCopy">Submit a claim to search current articles. Related coverage is evidence to inspect, not proof of truth or falsity.</p></div></div>
+            <div class="result-content" id="resultContent">
+              <div class="result-head"><div><p class="result-kicker">NEWS EVIDENCE REVIEW</p><h3 id="verdictText">Inconclusive</h3></div><span class="result-count" id="articleCount">0 matching articles</span></div>
+              <div class="result-body"><p class="result-summary" id="evidenceSummary"></p><div class="truth-note"><svg class="icon"><use href="#i-warning"/></svg><span>Related coverage does not confirm or refute a claim on its own. Open the sources and compare their reporting.</span></div>
+                <p class="secondary-estimate" id="classifierEstimate"></p><div class="confidence-box" id="confidenceBox"><div class="confidence-head"><span id="confidenceLabel">Separate model estimate</span><span id="confidenceValue"></span></div><div class="confidence-track"><div class="confidence-fill" id="confidenceFill"></div></div></div>
+                <details class="ocr-details" id="ocrDetails"><summary>View text read from the screenshot</summary><p id="ocrText"></p></details>
+                <div class="articles-heading"><h3>Related coverage</h3><span id="showingCount"></span></div><div class="article-list" id="articleList"></div>
+                <div class="result-actions"><button class="result-action primary" id="saveResult" type="button"><svg class="icon"><use href="#i-bookmark"/></svg>Save Result</button><button class="result-action" id="downloadReport" type="button"><svg class="icon"><use href="#i-download"/></svg>Generate Report</button><button class="result-action" id="shareResult" type="button"><svg class="icon"><use href="#i-share"/></svg>Share</button><button class="result-action" id="analyzeAnother" type="button"><svg class="icon"><use href="#i-refresh"/></svg>Analyze Another</button></div>
+              </div>
+            </div>
+          </section>
+          <section class="card recent-card" id="saved-results"><div class="side-card-heading"><svg class="icon"><use href="#i-bookmark"/></svg><h2>Saved Results</h2></div><div class="recent-list" id="savedList"><p class="recent-empty">Save a result to keep it in this browser.</p></div></section>
         </div>
-        <input id="fileInput" type="file" accept="image/png,image/jpeg,image/webp" />
-        <button class="file-button" id="chooseImage" type="button">Choose image</button>
-      </div>
-      <div class="preview" id="preview">
-        <img id="previewImg" alt="Selected screenshot preview" />
-        <span class="preview-name" id="previewName"></span>
-        <button class="remove-button" id="removeImage" type="button">Remove</button>
-      </div>
-
-      <div class="form-actions">
-        <p class="privacy-note">NewsAPI search is required. The checker reports related coverage and leaves the verdict inconclusive so you can review the linked sources.</p>
-        <button class="submit-button" id="analyzeBtn" type="button">
-          <span class="spinner" id="spinner" aria-hidden="true"></span>
-          <svg id="searchIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
-          <span id="buttonLabel">Search news coverage</span>
-        </button>
-      </div>
-      <p class="error" id="errorMessage" role="alert"></p>
-    </section>
-
-    <section class="results" id="results" aria-live="polite" aria-busy="false">
-      <div class="results-top"><h2>Evidence &amp; results</h2><span class="live-state" id="liveState">Ready when you are</span></div>
-      <div class="result-placeholder" id="resultPlaceholder">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4M8 11h6M11 8v6"/></svg>
-        <strong id="placeholderTitle">Your results will appear here</strong>
-        <p id="placeholderCopy">Enter a claim or add a screenshot on the left, then search current news coverage. This panel stays in view while the search runs.</p>
-      </div>
-      <div class="result-content" id="resultContent">
-      <div class="result-head">
-        <div>
-          <p class="result-kicker">NewsAPI evidence review</p>
-          <h2 id="verdictText">Inconclusive</h2>
-        </div>
-        <span class="result-count" id="articleCount">0 matching articles</span>
-      </div>
-      <div class="result-body">
-        <p class="result-summary" id="evidenceSummary"></p>
-        <p class="secondary-estimate" id="classifierEstimate"></p>
-        <details class="ocr-details" id="ocrDetails">
-          <summary>View text read from the screenshot</summary>
-          <p id="ocrText"></p>
-        </details>
-        <div class="articles-heading">
-          <h3>Related coverage</h3>
-          <span id="showingCount"></span>
-        </div>
-        <div class="article-list" id="articleList"></div>
-      </div>
-      </div>
-    </section>
+        <aside class="side-column">
+          <section class="card overview-card performance-card" id="model-insights">
+            <div class="side-card-heading performance-heading"><div><svg class="icon"><use href="#i-chart"/></svg><h2>Model Performance</h2></div><a class="view-all" href="#about">Details <svg class="icon"><use href="#i-arrow"/></svg></a></div>
+            <div class="metric-grid">
+              <div class="metric-tile metric-blue"><span>Accuracy</span><strong>—</strong></div>
+              <div class="metric-tile metric-green"><span>Precision</span><strong>—</strong></div>
+              <div class="metric-tile metric-purple"><span>Recall</span><strong>—</strong></div>
+              <div class="metric-tile metric-amber"><span>F1-Score</span><strong>—</strong></div>
+            </div>
+            <p class="overview-footnote">Validation metrics have not been reported for this model.</p>
+          </section>
+          <section class="card recent-card" id="recent-analyses"><div class="side-card-heading recent-heading"><div><svg class="icon"><use href="#i-clock"/></svg><h2>Recent Analyses</h2></div><a class="view-all" href="#recent-analyses">View All <svg class="icon"><use href="#i-arrow"/></svg></a></div><div class="recent-list" id="recentAnalysisList"><p class="recent-empty">Completed analyses appear here during this session.</p></div></section>
+          <section class="card overview-card dataset-card" id="dataset-overview">
+            <div class="side-card-heading recent-heading"><div><svg class="icon"><use href="#i-db"/></svg><h2>Dataset Overview</h2></div><a class="view-all" href="#about">Details <svg class="icon"><use href="#i-arrow"/></svg></a></div>
+            <div class="dataset-grid">
+              <div class="dataset-tile"><svg class="icon"><use href="#i-paper"/></svg><strong>—</strong><span>Training articles</span></div>
+              <div class="dataset-tile dataset-real"><svg class="icon"><use href="#i-check"/></svg><strong>Real</strong><span>Class label</span></div>
+              <div class="dataset-tile dataset-fake"><svg class="icon"><use href="#i-warning"/></svg><strong>Fake</strong><span>Class label</span></div>
+            </div>
+            <p class="overview-footnote">Dataset totals are not available in this app deployment.</p>
+          </section>
+          <section class="card research-card" id="about"><div class="side-card-heading"><svg class="icon"><use href="#i-info"/></svg><h2>About this checker</h2></div><p>NewsAPI searches for related articles. A text classifier may offer an additional estimate, but neither is a verified fact-check. Review the original sources.</p></section>
+        </aside>
+      </div></main>
+      <footer class="site-footer"><strong>FakeNewsDetect</strong> · Search current coverage. Review original sources.</footer>
     </div>
-  </main>
-
-  <footer class="site-footer">
-    <div class="shell"><strong>Rekkod AI</strong> · Search the coverage. Review the sources.</div>
-  </footer>
-
-  <script>
-    const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
-    let uploadedImage = null;
-
-    const newsInput = document.getElementById('newsText');
-    const fileInput = document.getElementById('fileInput');
-    const errorMessage = document.getElementById('errorMessage');
-    const analyzeButton = document.getElementById('analyzeBtn');
-    const resultsSection = document.getElementById('results');
-
-    newsInput.addEventListener('input', () => {
-      document.getElementById('charCount').textContent = `${newsInput.value.length.toLocaleString()} / 20,000`;
-    });
-
-    document.getElementById('chooseImage').addEventListener('click', () => fileInput.click());
-    document.getElementById('removeImage').addEventListener('click', removeImage);
-    analyzeButton.addEventListener('click', analyze);
-
-    fileInput.addEventListener('change', (event) => {
-      const file = event.target.files && event.target.files[0];
-      if (!file) return;
-      if (file.size > MAX_IMAGE_BYTES) {
-        showError('Choose an image smaller than 5 MB.');
-        fileInput.value = '';
-        return;
-      }
-      if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-        showError('Choose a JPG, PNG, or WebP image.');
-        fileInput.value = '';
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = () => {
-        uploadedImage = reader.result;
-        document.getElementById('previewImg').src = uploadedImage;
-        document.getElementById('previewName').textContent = file.name;
-        document.getElementById('preview').style.display = 'flex';
-        errorMessage.style.display = 'none';
-      };
-      reader.onerror = () => showError('The selected image could not be read.');
-      reader.readAsDataURL(file);
-    });
-
-    function removeImage() {
-      uploadedImage = null;
-      fileInput.value = '';
-      document.getElementById('previewImg').removeAttribute('src');
-      document.getElementById('previewName').textContent = '';
-      document.getElementById('preview').style.display = 'none';
-    }
-
-    function showError(message) {
-      errorMessage.textContent = message;
-      errorMessage.style.display = 'block';
-      if (!resultsSection.classList.contains('has-results')) {
-        document.getElementById('liveState').textContent = 'Search needs attention';
-        document.getElementById('placeholderTitle').textContent = 'Could not complete the search';
-        document.getElementById('placeholderCopy').textContent = message;
-      }
-    }
-
-    function setLoading(isLoading) {
-      analyzeButton.disabled = isLoading;
-      resultsSection.setAttribute('aria-busy', String(isLoading));
-      document.getElementById('liveState').textContent = isLoading ? 'Searching news coverage…' : (resultsSection.classList.contains('has-results') ? 'Search complete' : 'Ready when you are');
-      if (isLoading && !resultsSection.classList.contains('has-results')) {
-        document.getElementById('placeholderTitle').textContent = 'Searching current coverage…';
-        document.getElementById('placeholderCopy').textContent = 'Checking NewsAPI for related reporting. Your results will appear here.';
-      }
-      document.getElementById('spinner').style.display = isLoading ? 'block' : 'none';
-      document.getElementById('searchIcon').style.display = isLoading ? 'none' : 'block';
-      document.getElementById('buttonLabel').textContent = isLoading ? 'Searching NewsAPI…' : 'Search news coverage';
-    }
-
-    async function analyze() {
-      const news = newsInput.value.trim();
-      errorMessage.style.display = 'none';
-      if (!news && !uploadedImage) {
-        showError('Enter a claim or upload a screenshot first.');
-        newsInput.focus();
-        return;
-      }
-
-      setLoading(true);
-      try {
-        const response = await fetch('/analyze', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ news, image: uploadedImage })
-        });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || 'The news search could not be completed.');
-        renderResults(data);
-      } catch (error) {
-        showError(error.message || 'Unable to connect to the analysis service.');
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    function makeArticle(article) {
-      const card = document.createElement('article');
-      card.className = 'article';
-
-      const source = document.createElement('p');
-      source.className = 'article-source';
-      source.textContent = article.source || 'News source';
-
-      const title = document.createElement('a');
-      title.className = 'article-title';
-      title.textContent = article.title || 'Open related article';
-      try {
-        const url = new URL(article.url);
-        if (url.protocol === 'https:' || url.protocol === 'http:') {
-          title.href = url.href;
-          title.target = '_blank';
-          title.rel = 'noopener noreferrer';
-        }
-      } catch (_) {
-        title.removeAttribute('href');
-      }
-
-      const description = document.createElement('p');
-      description.className = 'article-description';
-      description.textContent = article.description || 'NewsAPI did not provide a description for this article.';
-
-      card.append(source, title, description);
-      return card;
-    }
-
-    function renderResults(data) {
-      const articles = Array.isArray(data.articles) ? data.articles : [];
-      const total = Number(data.total_results) || 0;
-      document.getElementById('verdictText').textContent = 'Inconclusive';
-      document.getElementById('articleCount').textContent = `${total.toLocaleString()} matching article${total === 1 ? '' : 's'}`;
-      document.getElementById('evidenceSummary').textContent = data.evidence_summary || 'Review the article links below; related coverage is not proof.';
-      document.getElementById('showingCount').textContent = articles.length ? `Showing ${articles.length}` : '';
-
-      const estimate = document.getElementById('classifierEstimate');
-      if (data.classifier_estimate) {
-        estimate.replaceChildren();
-        const label = document.createElement('strong');
-        label.textContent = 'Separate ML estimate (not a fact-check): ';
-        estimate.append(label, document.createTextNode(`${data.classifier_estimate} · ${data.classifier_probability}% model probability`));
-        estimate.style.display = 'block';
-      } else {
-        estimate.style.display = 'none';
-      }
-
-      const ocrDetails = document.getElementById('ocrDetails');
-      if (data.ocr_text && data.ocr_text.trim()) {
-        document.getElementById('ocrText').textContent = data.ocr_text;
-        ocrDetails.style.display = 'block';
-      } else {
-        ocrDetails.style.display = 'none';
-      }
-
-      const list = document.getElementById('articleList');
-      list.replaceChildren();
-      if (articles.length) {
-        articles.forEach((article) => list.appendChild(makeArticle(article)));
-      } else {
-        const empty = document.createElement('p');
-        empty.className = 'empty-results';
-        empty.textContent = 'NewsAPI found no matching articles. That does not mean the claim is false—try a shorter or more specific wording.';
-        list.appendChild(empty);
-      }
-
-      resultsSection.classList.add('has-results');
-      document.getElementById('resultPlaceholder').style.display = 'none';
-      document.getElementById('resultContent').style.display = 'block';
-      document.getElementById('liveState').textContent = 'Search complete';
-    }
-  </script>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="{{ url_for('static', filename='dashboard.js') }}" defer></script>
 </body>
 </html>
